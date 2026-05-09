@@ -2,14 +2,18 @@
   "compilerOptions": {
     "inlineSourceMap": true,
     "inlineSources": true,
+    "ignoreDeprecations": "6.0",
+    "baseUrl": ".",
     "module": "ESNext",
-    "target": "ES6",
+    "target": "ES2017",
     "allowSyntheticDefaultImports": true,
     "moduleResolution": "bundler",
+    
     "importHelpers": true,
     "isolatedModules": true,
     "strictNullChecks": true,
-    "lib": ["ES6", "DOM"],
+    "strictPropertyInitialization": false,
+    "lib": ["ES2017", "DOM"],
     "paths": {
       "@core/*": ["src/core/*"],
       "@modules/*": ["src/modules/*"],
