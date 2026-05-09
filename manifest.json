@@ -1,0 +1,11 @@
+{
+  "id": "obsidian-mega-plugin",
+  "name": "Beta Plugin",
+  "version": "0.0.1",
+  "minAppVersion": "1.0.0",
+  "description": "All-in-one modular plugin for Obsidian.",
+  "author": "Yodavatar",
+  "authorUrl": "",
+  "fundingUrl": "",
+  "isDesktopOnly": false
+}
