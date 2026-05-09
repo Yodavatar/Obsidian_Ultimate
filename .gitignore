@@ -1,0 +1,13 @@
+node_modules/
+main.js
+*.js.map
+
+# Obsidian
+.obsidian/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build
+dist/
