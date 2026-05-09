@@ -1,6 +1,6 @@
 {
-  "id": "obsidian-mega-plugin",
-  "name": "Beta Plugin",
+  "id": "obsidian-ultimate-plugin",
+  "name": "Obsidian Ultimate",
   "version": "0.1.0",
   "minAppVersion": "1.0.0",
   "description": "All-in-one modular plugin for Obsidian.",
