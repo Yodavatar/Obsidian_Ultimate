@@ -1,4 +1,4 @@
-import type MegaPlugin from "../main";
+import type Obsidian_Ultimate from "../main";
 
 /**
  * Interface que chaque module doit implémenter.
@@ -19,14 +19,14 @@ export interface IModule {
  * Settings globaux du plugin.
  * Chaque module a sa propre clé pour ses settings.
  */
-export interface MegaPluginSettings {
+export interface Obsidian_Ultimate_Settings {
   /** Map module_id → activé ou non */
   enabledModules: Record<string, boolean>;
   /** Settings spécifiques à chaque module (clé = module id) */
   moduleSettings: Record<string, unknown>;
 }
 
-export const DEFAULT_SETTINGS: MegaPluginSettings = {
+export const DEFAULT_SETTINGS: Obsidian_Ultimate_Settings = {
   enabledModules: {},
   moduleSettings: {},
 };

@@ -4,26 +4,38 @@ import { KanbanBoard } from "./KanbanBoard";
 
 export const KANBAN_VIEW_TYPE = "mega-plugin-kanban";
 
-export class KanbanView extends ItemView {
+export class KanbanView extends ItemView
+{
   private store: KanbanStore;
   private currentBoard: KanbanBoardData | null = null;
   private boardComponent: KanbanBoard | null = null;
 
-  constructor(leaf: WorkspaceLeaf, store: KanbanStore) {
+  constructor(leaf: WorkspaceLeaf, store: KanbanStore)
+  {
     super(leaf);
     this.store = store;
   }
 
-  getViewType() { return KANBAN_VIEW_TYPE; }
-  getDisplayText() { return this.currentBoard?.title ?? "Kanban"; }
-  getIcon() { return "layout-kanban"; }
+  getViewType()
+  {
+    return KANBAN_VIEW_TYPE;
+  }
+  getDisplayText()
+  {
+    return this.currentBoard?.title ?? "Kanban";
+  }
+  getIcon()
+  {
+    return "layout-kanban";
+  }
 
-  async onOpen(): Promise<void> {
+  async onOpen(): Promise<void>
+  {
     this.injectStyles();
     await this.renderBoardSelector();
   }
 
-  async onClose(): Promise<void> {}
+  async onClose(): Promise<void>{}
 
   // ─── Sélecteur de boards ─────────────────────────────────────────────────────
 
@@ -35,7 +47,8 @@ export class KanbanView extends ItemView {
     const boards = await this.store.listBoards();
 
     // S'il existe déjà des boards, en ouvrir le premier par défaut
-    if (boards.length === 0) {
+    if (boards.length === 0)
+    {
       const empty = root.createDiv("mkb-selector-empty");
       empty.createEl("p", { text: "Aucun board. Crée-en un !" });
       const btn = empty.createEl("button", { text: "+ Nouveau board", cls: "mkb-btn mkb-btn-primary" });
@@ -46,13 +59,15 @@ export class KanbanView extends ItemView {
     // Barre de sélection
     const bar = root.createDiv("mkb-selector-bar");
     const select = bar.createEl("select", { cls: "mkb-select" });
-    for (const b of boards) {
+    for (const b of boards)
+    {
       const opt = select.createEl("option", { text: b.title, value: b.id });
       if (this.currentBoard && b.id === this.currentBoard.id) opt.selected = true;
     }
 
     const openBtn = bar.createEl("button", { cls: "mkb-btn mkb-btn-primary", text: "Ouvrir" });
-    openBtn.addEventListener("click", async () => {
+    openBtn.addEventListener("click", async () =>
+    {
       const board = await this.store.loadBoard(select.value);
       if (board) this.openBoard(board, root);
     });

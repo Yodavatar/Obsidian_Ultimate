@@ -1,52 +1,47 @@
+//Necessary modules
 import { Plugin } from "obsidian";
 import { ModuleRegistry } from "./core/ModuleRegistry";
-import { MegaPluginSettingsTab } from "./core/SettingsTab";
-import { DEFAULT_SETTINGS, type MegaPluginSettings } from "./shared/types";
+import { Obsidian_Ultimate_Settings_Tab } from "./core/SettingsTab";
+import { DEFAULT_SETTINGS, type Obsidian_Ultimate_Settings } from "./shared/types";
 
-// Import des modules — ajouter ici au fur et à mesure
+//All modules one in all
 import { KanbanModule } from "./modules/kanban/KanbanModule";
 
-export default class MegaPlugin extends Plugin {
-  settings: MegaPluginSettings;
+export default class Obsidian_Ultimate extends Plugin
+{
+  settings: Obsidian_Ultimate_Settings;
   registry: ModuleRegistry;
 
   async onload() {
-    console.log("[MegaPlugin] Chargement...");
-
-    // 1. Charger les settings
+    console.log("[Obsidian Ultimate] Chargement...");
     await this.loadSettings();
-
-    // 2. Initialiser le registre
     this.registry = new ModuleRegistry();
-
-    // 3. Enregistrer les modules disponibles
     this.registry.register(new KanbanModule(this.app, this));
 
-    // 4. Activer les modules que l'utilisateur avait activés
-    for (const [moduleId, enabled] of Object.entries(
-      this.settings.enabledModules
-    )) {
-      if (enabled) {
+    for (const [moduleId, enabled] of Object.entries(this.settings.enabledModules))
+    {
+      if (enabled)
+      {
         await this.registry.enable(moduleId);
       }
     }
-
-    // 5. Ajouter la page de settings
-    this.addSettingTab(new MegaPluginSettingsTab(this.app, this));
-
-    console.log("[MegaPlugin] Prêt !");
+    this.addSettingTab(new Obsidian_Ultimate_Settings_Tab(this.app, this));
+    console.log("[Obsidian Ultimate] Prêt !");
   }
 
-  onunload() {
-    console.log("[MegaPlugin] Déchargement...");
+  onunload()
+  {
+    console.log("[Obsidian Ultimate] Déchargement...");
     this.registry.unloadAll();
   }
 
-  async loadSettings() {
+  async loadSettings()
+  {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
   }
 
-  async saveSettings() {
+  async saveSettings()
+  {
     await this.saveData(this.settings);
   }
 }

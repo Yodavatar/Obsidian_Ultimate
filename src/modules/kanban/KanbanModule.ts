@@ -1,30 +1,34 @@
 import { App } from "obsidian";
-import type MegaPlugin from "../../main";
+import type Obsidian_Ultimate from "../../main";
 import type { IModule } from "../../shared/types";
 import { KanbanStore } from "./KanbanStore";
 import { KanbanView, KANBAN_VIEW_TYPE } from "./KanbanView";
 
-export class KanbanModule implements IModule {
+export class KanbanModule implements IModule
+{
   id = "kanban";
   name = "Kanban";
 
   private app: App;
-  private plugin: MegaPlugin;
+  private plugin: Obsidian_Ultimate;
   private store: KanbanStore;
 
-  constructor(app: App, plugin: MegaPlugin) {
+  constructor(app: App, plugin: Obsidian_Ultimate)
+  {
     this.app = app;
     this.plugin = plugin;
     this.store = new KanbanStore(app);
   }
 
-  async onload(): Promise<void> {
+  async onload(): Promise<void>
+  {
     this.plugin.registerView(
       KANBAN_VIEW_TYPE,
       (leaf) => new KanbanView(leaf, this.store)
     );
 
-    this.plugin.addCommand({
+    this.plugin.addCommand(
+    {
       id: "open-kanban",
       name: "Ouvrir le Kanban",
       callback: () => this.activateView(),
