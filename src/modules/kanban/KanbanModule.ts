@@ -34,7 +34,7 @@ export class KanbanModule implements IModule
       callback: () => this.activateView(),
     });
 
-    this.plugin.addRibbonIcon("layout-kanban", "Kanban", () => this.activateView());
+    this.plugin.addRibbonIcon("kanban", "Kanban", () => this.activateView());
     console.log("[KanbanModule] Activé.");
   }
 
@@ -43,9 +43,13 @@ export class KanbanModule implements IModule
     console.log("[KanbanModule] Désactivé.");
   }
 
-  private async activateView(): Promise<void> {
+  private async activateView(): Promise<void>
+  {
     const existing = this.app.workspace.getLeavesOfType(KANBAN_VIEW_TYPE);
-    if (existing.length > 0) { this.app.workspace.revealLeaf(existing[0]); return; }
+    if (existing.length > 0)
+    {
+      this.app.workspace.revealLeaf(existing[0]); return;
+    }
     const leaf = this.app.workspace.getLeaf("tab");
     await leaf.setViewState({ type: KANBAN_VIEW_TYPE, active: true });
     this.app.workspace.revealLeaf(leaf);
