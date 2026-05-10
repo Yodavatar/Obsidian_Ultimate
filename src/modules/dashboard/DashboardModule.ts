@@ -15,7 +15,10 @@ export class DashboardModule implements IModule {
   constructor(app: App, plugin: Obsidian_Ultimate) {
     this.app = app;
     this.plugin = plugin;
-    this.settings = { ...DEFAULT_DASHBOARD_SETTINGS, ...(plugin.settings.moduleSettings["dashboard"] as DashboardSettings ?? {}) };
+    this.settings = {
+      ...DEFAULT_DASHBOARD_SETTINGS,
+      ...(plugin.settings.moduleSettings["dashboard"] as DashboardSettings ?? {}),
+    };
   }
 
   getDashboardSettings(): DashboardSettings { return this.settings; }
@@ -37,7 +40,15 @@ export class DashboardModule implements IModule {
       callback: () => this.activateView(),
     });
 
-    this.plugin.addRibbonIcon("layout-dashboard", "Dashboard", () => this.activateView());
+    // Remplace le new tab vide
+    this.plugin.registerEvent(
+      this.app.workspace.on("layout-change", () => {
+        const emptyLeaves = this.app.workspace.getLeavesOfType("empty");
+        for (const leaf of emptyLeaves) {
+          leaf.setViewState({ type: DASHBOARD_VIEW_TYPE, active: false });
+        }
+      })
+    );
 
     // Ouvrir au démarrage
     if (this.settings.openOnStartup) {

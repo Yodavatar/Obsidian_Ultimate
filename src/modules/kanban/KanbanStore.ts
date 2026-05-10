@@ -28,7 +28,7 @@ export interface KanbanBoardData {
   updatedAt: string;
 }
 
-const DATA_DIR = normalizePath(".mega-plugin/kanban");
+const DATA_DIR = normalizePath(".obsidian_ultimate/kanban");
 
 export class KanbanStore
 {

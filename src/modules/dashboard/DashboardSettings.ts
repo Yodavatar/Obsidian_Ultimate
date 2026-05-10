@@ -1,20 +1,24 @@
-export interface DashboardSettings {
-  language: "fr" | "en";
-  wallpaperPath: string;       // chemin dans le vault ex: "assets/bg.jpg"
-  wallpaperOpacity: number;    // 0-1
-  showFileCount: boolean;
-  showClock: boolean;
-  openOnStartup: boolean;
-  quickLinks: { label: string; path: string }[];
+export interface QuickLink {
+  label: string;
+  path: string;
 }
 
-export const DEFAULT_DASHBOARD_SETTINGS: DashboardSettings =
-{
-  language: "fr",
+export interface DashboardSettings {
+  wallpaperPath: string;
+  wallpaperOpacity: number;
+  showFileCount: boolean;
+  showClock: boolean;
+  showSeconds: boolean;
+  openOnStartup: boolean;
+  quickLinks: QuickLink[];
+}
+
+export const DEFAULT_DASHBOARD_SETTINGS: DashboardSettings = {
   wallpaperPath: "",
-  wallpaperOpacity: 0.4,
+  wallpaperOpacity: 0.5,
   showFileCount: true,
   showClock: true,
+  showSeconds: false,
   openOnStartup: true,
   quickLinks: [],
 };

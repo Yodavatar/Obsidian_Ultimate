@@ -1,37 +1,8 @@
-import { ItemView, WorkspaceLeaf, TFile, TAbstractFile } from "obsidian";
+import { ItemView, WorkspaceLeaf, TFile } from "obsidian";
 import type { DashboardSettings } from "./DashboardSettings";
 import type { DashboardModule } from "./DashboardModule";
 
 export const DASHBOARD_VIEW_TYPE = "obsidian_ultimate-dashboard";
-
-const I18N = {
-  fr: {
-    search: "Rechercher dans le vault...",
-    files: "fichiers",
-    noResults: "Aucun résultat",
-    quickLinks: "Accès rapides",
-    addLink: "+ Ajouter",
-    linkLabel: "Nom du lien",
-    linkPath: "Chemin de la note",
-    save: "Enregistrer",
-    cancel: "Annuler",
-    days: ["Dimanche","Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi"],
-    months: ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"],
-  },
-  en: {
-    search: "Search vault...",
-    files: "files",
-    noResults: "No results",
-    quickLinks: "Quick links",
-    addLink: "+ Add",
-    linkLabel: "Link name",
-    linkPath: "Note path",
-    save: "Save",
-    cancel: "Cancel",
-    days: ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],
-    months: ["January","February","March","April","May","June","July","August","September","October","November","December"],
-  },
-};
 
 export class DashboardView extends ItemView {
   private module: DashboardModule;
@@ -45,10 +16,9 @@ export class DashboardView extends ItemView {
 
   getViewType() { return DASHBOARD_VIEW_TYPE; }
   getDisplayText() { return "Dashboard"; }
-  getIcon() { return "layout-dashboard"; }
+  getIcon() { return "home"; }
 
-  get settings(): DashboardSettings { return this.module.getDashboardSettings(); }
-  get t() { return I18N[this.settings.language]; }
+  get s(): DashboardSettings { return this.module.getDashboardSettings(); }
 
   async onOpen(): Promise<void> {
     this.injectStyles();
@@ -60,263 +30,215 @@ export class DashboardView extends ItemView {
   }
 
   render(): void {
+    if (this.clockInterval) { window.clearInterval(this.clockInterval); this.clockInterval = null; }
     const root = this.containerEl.children[1] as HTMLElement;
     root.empty();
-    root.addClass("dash-root");
+    root.className = "dash-root";
 
-    // Fond d'écran
-    this.renderWallpaper(root);
+    this.applyWallpaper(root);
 
-    // Overlay sombre pour lisibilité
     const overlay = root.createDiv("dash-overlay");
+    overlay.style.setProperty("--dash-op", String(this.s.wallpaperOpacity));
 
-    // Bouton settings
-    this.renderSettingsBtn(overlay);
+    const btn = overlay.createEl("button", { cls: "dash-gear-btn" });
+    btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`;
+    btn.addEventListener("click", () => this.openSettings());
 
-    // Centre
     const center = overlay.createDiv("dash-center");
 
-    if (this.settings.showClock) this.renderClock(center);
+    if (this.s.showClock) this.renderClock(center);
     this.renderSearch(center);
-    if (this.settings.showFileCount) this.renderStats(center);
-    this.renderQuickLinks(center);
+    if (this.s.showFileCount) this.renderStats(center);
+    if (this.s.quickLinks.length > 0 || true) this.renderQuickLinks(center);
   }
 
-  // ─── Wallpaper ───────────────────────────────────────────────────────────────
-
-  private renderWallpaper(root: HTMLElement): void {
-    if (!this.settings.wallpaperPath) return;
-    const file = this.app.vault.getAbstractFileByPath(this.settings.wallpaperPath);
+  private applyWallpaper(root: HTMLElement): void {
+    if (!this.s.wallpaperPath) return;
+    const file = this.app.vault.getAbstractFileByPath(this.s.wallpaperPath);
     if (!(file instanceof TFile)) return;
-    const url = this.app.vault.getResourcePath(file);
-    root.style.backgroundImage = `url("${url}")`;
-    root.style.backgroundSize = "cover";
-    root.style.backgroundPosition = "center";
+    root.style.backgroundImage = `url("${this.app.vault.getResourcePath(file)}")`;
   }
-
-  // ─── Clock ───────────────────────────────────────────────────────────────────
 
   private renderClock(parent: HTMLElement): void {
-    const clockEl = parent.createDiv("dash-clock");
-    const timeEl = clockEl.createEl("div", { cls: "dash-time" });
-    const dateEl = clockEl.createEl("div", { cls: "dash-date" });
+    const wrap = parent.createDiv("dash-clock");
+    const time = wrap.createDiv("dash-time");
+    const date = wrap.createDiv("dash-date");
 
-    const update = () => {
+    const DAYS = ["Dimanche","Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi"];
+    const MONTHS = ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
+
+    const tick = () => {
       const now = new Date();
-      const h = String(now.getHours()).padStart(2, "0");
-      const m = String(now.getMinutes()).padStart(2, "0");
-      timeEl.textContent = `${h}:${m}`;
-
-      const day = this.t.days[now.getDay()];
-      const date = now.getDate();
-      const month = this.t.months[now.getMonth()];
-      const year = now.getFullYear();
-      dateEl.textContent = `${day} ${date} ${month} ${year}`;
+      const h = String(now.getHours()).padStart(2,"0");
+      const m = String(now.getMinutes()).padStart(2,"0");
+      const s = String(now.getSeconds()).padStart(2,"0");
+      time.textContent = this.s.showSeconds ? `${h}:${m}:${s}` : `${h}:${m}`;
+      date.textContent = `${DAYS[now.getDay()]} ${now.getDate()} ${MONTHS[now.getMonth()]} ${now.getFullYear()}`;
     };
-
-    update();
-    this.clockInterval = window.setInterval(update, 10000);
+    tick();
+    this.clockInterval = window.setInterval(tick, 1000);
   }
-
-  // ─── Search ──────────────────────────────────────────────────────────────────
 
   private renderSearch(parent: HTMLElement): void {
     const wrap = parent.createDiv("dash-search-wrap");
-    const input = wrap.createEl("input", {
-      type: "text",
-      placeholder: this.t.search,
-      cls: "dash-search-input",
-    });
-
-    const results = wrap.createDiv("dash-search-results");
-    results.style.display = "none";
+    const input = wrap.createEl("input", { type: "text", placeholder: "🔍  Rechercher dans le vault…", cls: "dash-search" });
+    const results = wrap.createDiv("dash-results");
 
     input.addEventListener("input", () => {
       if (this.searchTimeout) window.clearTimeout(this.searchTimeout);
-      this.searchTimeout = window.setTimeout(() => this.doSearch(input.value, results), 200);
+      this.searchTimeout = window.setTimeout(() => {
+        results.empty();
+        const q = input.value.trim().toLowerCase();
+        if (!q) { results.style.display = "none"; return; }
+        const files = this.app.vault.getMarkdownFiles().filter(f => f.basename.toLowerCase().includes(q)).slice(0, 8);
+        results.style.display = "block";
+        if (files.length === 0) { results.createDiv({ text: "Aucun résultat", cls: "dash-result-empty" }); return; }
+        for (const f of files) {
+          const item = results.createDiv("dash-result-item");
+          item.createSpan({ text: f.basename, cls: "dash-result-name" });
+          item.createSpan({ text: f.parent?.path ?? "/", cls: "dash-result-path" });
+          item.addEventListener("click", () => {
+            this.app.workspace.openLinkText(f.path, "", false);
+            results.style.display = "none";
+            input.value = "";
+          });
+        }
+      }, 150);
     });
 
-    input.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") { input.value = ""; results.style.display = "none"; }
-    });
-
-    document.addEventListener("click", (e) => {
-      if (!wrap.contains(e.target as Node)) results.style.display = "none";
-    });
+    input.addEventListener("keydown", e => { if (e.key === "Escape") { input.value = ""; results.style.display = "none"; } });
+    document.addEventListener("click", e => { if (!wrap.contains(e.target as Node)) results.style.display = "none"; }, { capture: false });
+    results.style.display = "none";
   }
-
-  private doSearch(query: string, results: HTMLElement): void {
-    results.empty();
-    if (!query.trim()) { results.style.display = "none"; return; }
-
-    const files = this.app.vault.getMarkdownFiles()
-      .filter(f => f.basename.toLowerCase().includes(query.toLowerCase()))
-      .slice(0, 8);
-
-    results.style.display = "block";
-
-    if (files.length === 0) {
-      results.createEl("div", { text: this.t.noResults, cls: "dash-search-empty" });
-      return;
-    }
-
-    for (const file of files) {
-      const item = results.createDiv("dash-search-item");
-      item.createEl("span", { text: "📄", cls: "dash-search-icon" });
-      item.createEl("span", { text: file.basename, cls: "dash-search-name" });
-      item.createEl("span", { text: file.parent?.path ?? "", cls: "dash-search-path" });
-      item.addEventListener("click", () => {
-        this.app.workspace.openLinkText(file.path, "", false);
-        results.style.display = "none";
-      });
-    }
-  }
-
-  // ─── Stats ───────────────────────────────────────────────────────────────────
 
   private renderStats(parent: HTMLElement): void {
     const count = this.app.vault.getMarkdownFiles().length;
-    parent.createDiv({ text: `${count} ${this.t.files}`, cls: "dash-stat" });
+    parent.createDiv({ text: `${count} notes`, cls: "dash-stat" });
   }
 
-  // ─── Quick links ─────────────────────────────────────────────────────────────
-
   private renderQuickLinks(parent: HTMLElement): void {
-    const section = parent.createDiv("dash-quicklinks");
-    section.createEl("div", { text: this.t.quickLinks, cls: "dash-quicklinks-title" });
-    const list = section.createDiv("dash-quicklinks-list");
+    const section = parent.createDiv("dash-links");
+    const list = section.createDiv("dash-links-list");
 
-    for (const link of this.settings.quickLinks) {
-      const btn = list.createEl("button", { text: link.label, cls: "dash-quicklink-btn" });
+    for (const link of this.s.quickLinks) {
+      const btn = list.createEl("button", { text: link.label, cls: "dash-link-btn" });
       btn.addEventListener("click", () => this.app.workspace.openLinkText(link.path, "", false));
-      btn.addEventListener("contextmenu", (e) => {
+      btn.addEventListener("contextmenu", async e => {
         e.preventDefault();
-        this.confirmRemoveLink(link.path);
+        this.s.quickLinks = this.s.quickLinks.filter(l => l.path !== link.path);
+        await this.module.saveDashboardSettings();
+        this.render();
       });
     }
 
-    const addBtn = list.createEl("button", { text: this.t.addLink, cls: "dash-quicklink-btn dash-quicklink-add" });
-    addBtn.addEventListener("click", () => this.openAddLinkModal());
+    const add = list.createEl("button", { text: "+ Ajouter", cls: "dash-link-btn dash-link-add" });
+    add.addEventListener("click", () => this.openAddLink());
   }
 
-  private openAddLinkModal(): void {
-    const root = this.containerEl.children[1] as HTMLElement;
-    const overlay = root.createDiv("dash-modal-overlay");
+  private openAddLink(): void {
+    const overlay = this.makeOverlay();
     const modal = overlay.createDiv("dash-modal");
-    modal.createEl("h3", { text: this.t.quickLinks });
+    modal.createEl("h3", { text: "Nouveau lien rapide" });
 
-    const row1 = modal.createDiv("dash-modal-row");
-    row1.createEl("label", { text: this.t.linkLabel });
-    const labelInput = row1.createEl("input", { type: "text", placeholder: "Mon projet" });
+    const r1 = modal.createDiv("dash-modal-row");
+    r1.createEl("label", { text: "Nom" });
+    const labelInput = r1.createEl("input", { type: "text", placeholder: "Mon projet" });
 
-    const row2 = modal.createDiv("dash-modal-row");
-    row2.createEl("label", { text: this.t.linkPath });
-    const pathInput = row2.createEl("input", { type: "text", placeholder: "dossier/note.md" });
+    const r2 = modal.createDiv("dash-modal-row");
+    r2.createEl("label", { text: "Chemin (note.md)" });
+    const pathInput = r2.createEl("input", { type: "text", placeholder: "dossier/note.md" });
 
     const btns = modal.createDiv("dash-modal-btns");
-    const saveBtn = btns.createEl("button", { text: this.t.save, cls: "mod-cta" });
-    saveBtn.addEventListener("click", async () => {
+    btns.createEl("button", { text: "Ajouter", cls: "dash-btn dash-btn-primary" }).addEventListener("click", async () => {
       const label = labelInput.value.trim();
       const path = pathInput.value.trim();
       if (!label || !path) return;
-      this.settings.quickLinks.push({ label, path });
+      this.s.quickLinks.push({ label, path });
       await this.module.saveDashboardSettings();
       overlay.remove();
       this.render();
     });
-
-    const cancelBtn = btns.createEl("button", { text: this.t.cancel });
-    cancelBtn.addEventListener("click", () => overlay.remove());
-    overlay.addEventListener("click", (e) => { if (e.target === overlay) overlay.remove(); });
+    btns.createEl("button", { text: "Annuler", cls: "dash-btn" }).addEventListener("click", () => overlay.remove());
   }
 
-  private async confirmRemoveLink(path: string): Promise<void> {
-    this.settings.quickLinks = this.settings.quickLinks.filter(l => l.path !== path);
-    await this.module.saveDashboardSettings();
-    this.render();
-  }
-
-  // ─── Settings panel ──────────────────────────────────────────────────────────
-
-  private renderSettingsBtn(parent: HTMLElement): void {
-    const btn = parent.createEl("button", { cls: "dash-settings-btn", title: "Paramètres du dashboard" });
-    btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`;
-    btn.addEventListener("click", () => this.openSettingsPanel());
-  }
-
-  private openSettingsPanel(): void {
+  private openSettings(): void {
     const root = this.containerEl.children[1] as HTMLElement;
-    const overlay = root.createDiv("dash-modal-overlay");
-    const panel = overlay.createDiv("dash-modal dash-settings-panel");
-    panel.createEl("h3", { text: "⚙️ Dashboard" });
+    const existing = root.querySelector(".dash-overlay-modal");
+    if (existing) { existing.remove(); return; }
 
-    // Langue
-    this.settingRow(panel, "Langue / Language", (row) => {
-      const sel = row.createEl("select", { cls: "dash-select" });
-      [["fr","Français"],["en","English"]].forEach(([v,l]) => {
-        const o = sel.createEl("option", { text: l, value: v });
-        if (v === this.settings.language) o.selected = true;
-      });
-      sel.addEventListener("change", async () => {
-        this.settings.language = sel.value as "fr"|"en";
-        await this.module.saveDashboardSettings();
-      });
-    });
+    const overlay = this.makeOverlay();
+    const panel = overlay.createDiv("dash-modal dash-settings");
+    panel.createEl("h3", { text: "⚙️ Paramètres du Dashboard" });
 
-    // Afficher l'heure
-    this.settingToggle(panel, "Afficher l'heure", "showClock");
-
-    // Afficher le nombre de fichiers
-    this.settingToggle(panel, "Afficher le nombre de fichiers", "showFileCount");
-
-    // Ouvrir au démarrage
+    this.settingToggle(panel, "Afficher l'horloge", "showClock");
+    this.settingToggle(panel, "Afficher les secondes", "showSeconds");
+    this.settingToggle(panel, "Afficher le nombre de notes", "showFileCount");
     this.settingToggle(panel, "Ouvrir au démarrage", "openOnStartup");
 
-    // Fond d'écran
-    this.settingRow(panel, "Fond d'écran (chemin vault)", (row) => {
-      const input = row.createEl("input", { type: "text", value: this.settings.wallpaperPath, placeholder: "assets/fond.jpg" });
-      input.style.flex = "1";
-      input.addEventListener("change", async () => {
-        this.settings.wallpaperPath = input.value.trim();
+    // Wallpaper — file picker natif
+    const wr = panel.createDiv("dash-setting-row");
+    wr.createSpan({ text: "Fond d'écran", cls: "dash-setting-label" });
+    const wpRight = wr.createDiv("dash-setting-right");
+    const wpName = wpRight.createSpan({ text: this.s.wallpaperPath ? this.s.wallpaperPath.split("/").pop()! : "Aucun", cls: "dash-setting-val" });
+    const wpBtn = wpRight.createEl("button", { text: "Choisir…", cls: "dash-btn" });
+    wpBtn.addEventListener("click", () => {
+      const fileInput = document.createElement("input");
+      fileInput.type = "file";
+      fileInput.accept = "image/*";
+      fileInput.addEventListener("change", async () => {
+        const file = fileInput.files?.[0];
+        if (!file) return;
+        const destDir = ".Obsidian_Ultimate/dashboard";
+        const destPath = `${destDir}/${file.name}`;
+        if (!(await this.app.vault.adapter.exists(destDir))) {
+          await this.app.vault.adapter.mkdir(destDir);
+        }
+        const buffer = await file.arrayBuffer();
+        await this.app.vault.adapter.writeBinary(destPath, buffer);
+        this.s.wallpaperPath = destPath;
+        wpName.textContent = file.name;
         await this.module.saveDashboardSettings();
       });
+      fileInput.click();
+    });
+    const clearBtn = wpRight.createEl("button", { text: "✕", cls: "dash-btn", title: "Supprimer le fond" });
+    clearBtn.addEventListener("click", async () => {
+      this.s.wallpaperPath = "";
+      wpName.textContent = "Aucun";
+      await this.module.saveDashboardSettings();
     });
 
-    // Opacité overlay
-    this.settingRow(panel, "Opacité overlay (0-1)", (row) => {
-      const input = row.createEl("input", { type: "number", value: String(this.settings.wallpaperOpacity) });
-      input.min = "0"; input.max = "1"; input.step = "0.05"; input.style.width = "70px";
-      input.addEventListener("change", async () => {
-        this.settings.wallpaperOpacity = parseFloat(input.value);
-        await this.module.saveDashboardSettings();
-      });
+    // Opacité
+    const or = panel.createDiv("dash-setting-row");
+    or.createSpan({ text: "Opacité overlay", cls: "dash-setting-label" });
+    const orRight = or.createDiv("dash-setting-right");
+    const opInput = orRight.createEl("input", { type: "range", value: String(this.s.wallpaperOpacity) });
+    opInput.min = "0"; opInput.max = "1"; opInput.step = "0.05";
+    const opVal = orRight.createSpan({ text: String(this.s.wallpaperOpacity), cls: "dash-setting-val" });
+    opInput.addEventListener("input", async () => {
+      this.s.wallpaperOpacity = parseFloat(opInput.value);
+      opVal.textContent = opInput.value;
+      await this.module.saveDashboardSettings();
     });
 
-    const closeBtn = panel.createEl("button", { text: "Fermer", cls: "mod-cta" });
-    closeBtn.style.marginTop = "8px";
-    closeBtn.addEventListener("click", async () => { overlay.remove(); this.render(); });
-    overlay.addEventListener("click", (e) => { if (e.target === overlay) { overlay.remove(); this.render(); } });
-  }
-
-  private settingRow(parent: HTMLElement, label: string, cb: (row: HTMLElement) => void): void {
-    const row = parent.createDiv("dash-setting-row");
-    row.createEl("span", { text: label, cls: "dash-setting-label" });
-    const right = row.createDiv("dash-setting-right");
-    cb(right);
+    panel.createEl("button", { text: "Fermer", cls: "dash-btn dash-btn-primary" })
+      .addEventListener("click", () => { overlay.remove(); this.render(); });
   }
 
   private settingToggle(parent: HTMLElement, label: string, key: keyof DashboardSettings): void {
-    this.settingRow(parent, label, (row) => {
-      const toggle = row.createEl("input", { type: "checkbox" });
-      toggle.checked = this.settings[key] as boolean;
-      toggle.addEventListener("change", async () => {
-        (this.settings as any)[key] = toggle.checked;
-        await this.module.saveDashboardSettings();
-      });
-    });
+    const row = parent.createDiv("dash-setting-row");
+    row.createSpan({ text: label, cls: "dash-setting-label" });
+    const toggle = row.createEl("input", { type: "checkbox" });
+    toggle.checked = this.s[key] as boolean;
+    toggle.addEventListener("change", async () => { (this.s as any)[key] = toggle.checked; await this.module.saveDashboardSettings(); });
   }
 
-  // ─── Styles ──────────────────────────────────────────────────────────────────
+  private makeOverlay(): HTMLElement {
+    const root = this.containerEl.children[1] as HTMLElement;
+    const overlay = root.createDiv("dash-overlay-modal");
+    overlay.addEventListener("click", e => { if (e.target === overlay) { overlay.remove(); this.render(); } });
+    return overlay;
+  }
 
   private injectStyles(): void {
     const id = "obsidian_ultimate_dashboard_styles";
@@ -326,109 +248,120 @@ export class DashboardView extends ItemView {
     s.textContent = `
       .dash-root {
         height: 100%; width: 100%; position: relative;
-        background-color: var(--background-primary);
+        background: var(--background-primary);
         background-size: cover; background-position: center;
-        display: flex; flex-direction: column;
+        display: flex;
       }
       .dash-overlay {
         position: absolute; inset: 0;
-        background: rgba(0,0,0,var(--dash-overlay-opacity, 0.45));
+        background: rgba(0,0,0,calc(var(--dash-op, 0.5) * 1));
         display: flex; flex-direction: column;
         align-items: center; justify-content: center;
-        gap: 24px; padding: 24px;
+        gap: 28px; padding: 32px;
       }
-      .dash-settings-btn {
-        position: absolute; top: 14px; right: 14px;
-        background: rgba(255,255,255,0.12); border: none;
-        border-radius: 8px; padding: 8px; cursor: pointer;
-        color: white; backdrop-filter: blur(4px);
-        transition: background 0.2s;
+      .dash-gear-btn {
+        position: absolute; top: 16px; right: 16px;
+        background: rgba(255,255,255,0.1);
+        border: 1px solid rgba(255,255,255,0.15);
+        border-radius: 8px; padding: 8px 9px;
+        color: rgba(255,255,255,0.7); cursor: pointer;
+        backdrop-filter: blur(6px); transition: all 0.2s; line-height: 0;
       }
-      .dash-settings-btn:hover { background: rgba(255,255,255,0.22); }
+      .dash-gear-btn:hover { background: rgba(255,255,255,0.2); color: white; }
 
       /* Clock */
-      .dash-clock { text-align: center; color: white; text-shadow: 0 2px 8px rgba(0,0,0,0.5); }
-      .dash-time { font-size: 5em; font-weight: 200; letter-spacing: 4px; line-height: 1; }
-      .dash-date { font-size: 1.1em; opacity: 0.85; margin-top: 4px; text-transform: capitalize; }
+      .dash-clock { text-align: center; color: white; text-shadow: 0 2px 12px rgba(0,0,0,0.6); }
+      .dash-time { font-size: 6em; font-weight: 100; letter-spacing: 6px; line-height: 1; font-variant-numeric: tabular-nums; }
+      .dash-date { font-size: 1em; opacity: 0.8; margin-top: 6px; letter-spacing: 1px; }
 
       /* Search */
-      .dash-search-wrap { position: relative; width: 100%; max-width: 560px; }
-      .dash-search-input {
-        width: 100%; padding: 12px 18px; font-size: 1em;
-        border: none; border-radius: 30px;
-        background: rgba(255,255,255,0.15);
-        backdrop-filter: blur(8px);
+      .dash-search-wrap { position: relative; width: 100%; max-width: 580px; }
+      .dash-search {
+        width: 100%; padding: 14px 22px; font-size: 1em;
+        border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 40px;
+        background: rgba(255,255,255,0.1);
+        backdrop-filter: blur(12px);
         color: white; outline: none;
-        box-shadow: 0 2px 16px rgba(0,0,0,0.2);
-        transition: background 0.2s;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+        transition: all 0.2s; box-sizing: border-box;
       }
-      .dash-search-input::placeholder { color: rgba(255,255,255,0.6); }
-      .dash-search-input:focus { background: rgba(255,255,255,0.25); }
-      .dash-search-results {
-        position: absolute; top: calc(100% + 6px); left: 0; right: 0;
+      .dash-search::placeholder { color: rgba(255,255,255,0.5); }
+      .dash-search:focus { background: rgba(255,255,255,0.18); border-color: rgba(255,255,255,0.35); box-shadow: 0 4px 32px rgba(0,0,0,0.3); }
+      .dash-results {
+        position: absolute; top: calc(100% + 8px); left: 0; right: 0;
         background: var(--background-primary);
         border: 1px solid var(--background-modifier-border);
-        border-radius: 12px; overflow: hidden;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.3); z-index: 50;
+        border-radius: 14px; overflow: hidden;
+        box-shadow: 0 12px 40px rgba(0,0,0,0.4); z-index: 50;
       }
-      .dash-search-item {
-        display: flex; align-items: center; gap: 10px;
-        padding: 10px 14px; cursor: pointer;
+      .dash-result-item {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 11px 16px; cursor: pointer; gap: 12px;
+        border-bottom: 1px solid var(--background-modifier-border);
         transition: background 0.15s;
       }
-      .dash-search-item:hover { background: var(--background-modifier-hover); }
-      .dash-search-icon { font-size: 0.9em; }
-      .dash-search-name { font-weight: 500; flex: 1; }
-      .dash-search-path { font-size: 0.75em; color: var(--text-muted); }
-      .dash-search-empty { padding: 12px 16px; color: var(--text-muted); font-size: 0.9em; }
+      .dash-result-item:last-child { border-bottom: none; }
+      .dash-result-item:hover { background: var(--background-modifier-hover); }
+      .dash-result-name { font-size: 0.9em; font-weight: 500; }
+      .dash-result-path { font-size: 0.75em; color: var(--text-muted); }
+      .dash-result-empty { padding: 14px 16px; color: var(--text-muted); font-size: 0.88em; }
 
       /* Stats */
-      .dash-stat {
-        color: rgba(255,255,255,0.75);
-        font-size: 0.85em; letter-spacing: 1px;
-        text-shadow: 0 1px 4px rgba(0,0,0,0.4);
-      }
+      .dash-stat { color: rgba(255,255,255,0.55); font-size: 0.8em; letter-spacing: 2px; text-transform: uppercase; }
 
       /* Quick links */
-      .dash-quicklinks { display: flex; flex-direction: column; align-items: center; gap: 8px; }
-      .dash-quicklinks-title { color: rgba(255,255,255,0.6); font-size: 0.75em; letter-spacing: 2px; text-transform: uppercase; }
-      .dash-quicklinks-list { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
-      .dash-quicklink-btn {
-        background: rgba(255,255,255,0.13); border: 1px solid rgba(255,255,255,0.2);
-        border-radius: 20px; padding: 6px 16px;
-        color: white; cursor: pointer; font-size: 0.88em;
-        backdrop-filter: blur(4px); transition: background 0.2s;
+      .dash-links { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+      .dash-links-list { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-width: 640px; }
+      .dash-link-btn {
+        background: rgba(255,255,255,0.1);
+        border: 1px solid rgba(255,255,255,0.18);
+        border-radius: 22px; padding: 7px 18px;
+        color: rgba(255,255,255,0.85); cursor: pointer; font-size: 0.85em;
+        backdrop-filter: blur(6px); transition: all 0.2s;
       }
-      .dash-quicklink-btn:hover { background: rgba(255,255,255,0.25); }
-      .dash-quicklink-add { border-style: dashed; opacity: 0.7; }
-      .dash-quicklink-add:hover { opacity: 1; }
+      .dash-link-btn:hover { background: rgba(255,255,255,0.22); color: white; transform: translateY(-1px); }
+      .dash-link-add { border-style: dashed; opacity: 0.55; }
+      .dash-link-add:hover { opacity: 1; }
 
-      /* Modal */
-      .dash-modal-overlay {
+      /* Modal overlay */
+      .dash-overlay-modal {
         position: absolute; inset: 0;
-        background: rgba(0,0,0,0.5);
+        background: rgba(0,0,0,0.55);
         display: flex; align-items: center; justify-content: center; z-index: 100;
+        backdrop-filter: blur(2px);
       }
       .dash-modal {
         background: var(--background-primary);
         border: 1px solid var(--background-modifier-border);
-        border-radius: 12px; padding: 24px; min-width: 320px;
-        display: flex; flex-direction: column; gap: 12px;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        border-radius: 14px; padding: 28px; min-width: 340px; max-width: 460px; width: 100%;
+        display: flex; flex-direction: column; gap: 14px;
+        box-shadow: 0 16px 48px rgba(0,0,0,0.5);
       }
-      .dash-modal h3 { margin: 0; }
-      .dash-modal-row { display: flex; flex-direction: column; gap: 4px; }
-      .dash-modal-row label { font-size: 0.8em; color: var(--text-muted); }
-      .dash-modal-row input { padding: 6px 10px; border-radius: 6px; border: 1px solid var(--background-modifier-border); background: var(--background-secondary); color: var(--text-normal); }
-      .dash-modal-btns { display: flex; gap: 8px; justify-content: flex-end; }
+      .dash-modal h3 { margin: 0; font-size: 1.1em; }
+      .dash-modal-row { display: flex; flex-direction: column; gap: 5px; }
+      .dash-modal-row label { font-size: 0.78em; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+      .dash-modal-row input { padding: 8px 12px; border-radius: 8px; border: 1px solid var(--background-modifier-border); background: var(--background-secondary); color: var(--text-normal); font-size: 0.9em; outline: none; }
+      .dash-modal-row input:focus { border-color: var(--interactive-accent); }
+      .dash-modal-btns { display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px; }
 
       /* Settings panel */
-      .dash-settings-panel { min-width: 380px; }
-      .dash-setting-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--background-modifier-border); gap: 12px; }
+      .dash-settings { min-width: 380px; }
+      .dash-setting-row {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 10px 0; border-bottom: 1px solid var(--background-modifier-border); gap: 16px;
+      }
       .dash-setting-row:last-of-type { border-bottom: none; }
-      .dash-setting-label { font-size: 0.9em; }
-      .dash-setting-right { display: flex; align-items: center; gap: 8px; }
-      .dash-select { background: var(--background-secondary); color: var(--text-normal); border: 1px solid var(--background-modifier-border); border-radius: 6px; padding: 3px 8px; }
+      .dash-setting-label { font-size: 0.88em; }
+      .dash-setting-val { font-size: 0.8em; color: var(--text-muted); min-width: 28px; text-align: right; }
+      .dash-setting-row input[type="range"] { flex: 1; max-width: 120px; accent-color: var(--interactive-accent); }
+      .dash-setting-row input[type="text"] { flex: 1; padding: 5px 9px; border-radius: 6px; border: 1px solid var(--background-modifier-border); background: var(--background-secondary); color: var(--text-normal); font-size: 0.85em; min-width: 0; outline: none; }
+
+      /* Buttons */
+      .dash-btn { border-radius: 8px; padding: 8px 16px; font-size: 0.85em; cursor: pointer; border: 1px solid var(--background-modifier-border); background: var(--background-secondary); color: var(--text-normal); transition: background 0.15s; }
+      .dash-btn:hover { background: var(--background-modifier-hover); }
+      .dash-btn-primary { background: var(--interactive-accent); color: var(--text-on-accent); border-color: transparent; }
+      .dash-btn-primary:hover { filter: brightness(1.1); }
     `;
     document.head.appendChild(s);
   }
