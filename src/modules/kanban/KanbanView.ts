@@ -84,7 +84,7 @@ export class KanbanView extends ItemView {
 
   private openBoard(board: KanbanBoardData, root: HTMLElement, existingContainer?: HTMLElement): void {
     this.currentBoard = board;
-    this.leaf.updateHeader();
+    this.app.workspace.requestSaveLayout();
 
     // Remplacer la zone board
     let boardContainer = existingContainer ?? root.querySelector(".mkb-board-container") as HTMLElement;
@@ -101,7 +101,7 @@ export class KanbanView extends ItemView {
         const opt = select.querySelector(`option[value="${board.id}"]`) as HTMLOptionElement;
         if (opt) opt.text = board.title;
       }
-      this.leaf.updateHeader();
+      this.app.workspace.requestSaveLayout();
     };
     this.boardComponent.render();
   }
