@@ -1,4 +1,4 @@
-import { App, normalizePath } from "obsidian";
+import { App, normalizePath, Modal} from "obsidian";
 
 export type Priority = "urgent" | "high" | "normal" | "low";
 
@@ -30,58 +30,86 @@ export interface KanbanBoardData {
 
 const DATA_DIR = normalizePath(".mega-plugin/kanban");
 
-export class KanbanStore {
+export class KanbanStore
+{
   private app: App;
 
-  constructor(app: App) {
+  constructor(app: App)
+  {
     this.app = app;
   }
 
-  private boardPath(boardId: string): string {
+  private boardPath(boardId: string): string
+  {
     return normalizePath(`${DATA_DIR}/${boardId}.json`);
   }
 
-  async ensureDataDir(): Promise<void> {
-    if (!(await this.app.vault.adapter.exists(DATA_DIR))) {
+  async ensureDataDir(): Promise<void>
+  {
+    if (!(await this.app.vault.adapter.exists(DATA_DIR)))
+    {
       await this.app.vault.adapter.mkdir(DATA_DIR);
     }
   }
 
-  async loadBoard(boardId: string): Promise<KanbanBoardData | null> {
+  async loadBoard(boardId: string): Promise<KanbanBoardData | null>
+  {
     const path = this.boardPath(boardId);
     if (!(await this.app.vault.adapter.exists(path))) return null;
     const raw = await this.app.vault.adapter.read(path);
     return JSON.parse(raw) as KanbanBoardData;
   }
 
-  async saveBoard(board: KanbanBoardData): Promise<void> {
+  async saveBoard(board: KanbanBoardData): Promise<void>
+  {
     await this.ensureDataDir();
     board.updatedAt = new Date().toISOString();
-    await this.app.vault.adapter.write(
+    await this.app.vault.adapter.write
+    (
       this.boardPath(board.id),
       JSON.stringify(board, null, 2)
     );
   }
 
-  async listBoards(): Promise<KanbanBoardData[]> {
+  async listBoards(): Promise<KanbanBoardData[]>
+  {
     await this.ensureDataDir();
     const files = await this.app.vault.adapter.list(DATA_DIR);
     const boards: KanbanBoardData[] = [];
-    for (const f of files.files.filter((f) => f.endsWith(".json"))) {
+    for (const f of files.files.filter((f) => f.endsWith(".json")))
+    {
       const raw = await this.app.vault.adapter.read(f);
       try { boards.push(JSON.parse(raw)); } catch {}
     }
     return boards.sort((a, b) => a.title.localeCompare(b.title));
   }
 
-  async deleteBoard(boardId: string): Promise<void> {
-    const path = this.boardPath(boardId);
-    if (await this.app.vault.adapter.exists(path)) {
-      await this.app.vault.adapter.remove(path);
+  async deleteBoard(boardId: string): Promise<void>
+  {
+    const confirmed = await new Promise<boolean>(resolve =>
+    {
+      const m = new Modal(this.app);
+      m.contentEl.createEl("p", { text: "Supprimer ce board ?" });
+      m.contentEl.createEl("button", { text: "Confirmer", cls: "mod-warning" })
+        .addEventListener("click", () => { m.close(); resolve(true); });
+      m.contentEl.createEl("button", { text: "Annuler" })
+        .addEventListener("click", () => { m.close(); resolve(false); });
+      m.open();
+    });
+
+    if (!confirmed) return;
+    else
+    {
+      const path = this.boardPath(boardId);
+      if (await this.app.vault.adapter.exists(path))
+      {
+        await this.app.vault.adapter.remove(path);
+      }
     }
   }
 
-  createEmptyBoard(title: string): KanbanBoardData {
+  createEmptyBoard(title: string): KanbanBoardData
+  {
     const now = new Date().toISOString();
     const ts = Date.now();
     return {
@@ -97,19 +125,22 @@ export class KanbanStore {
     };
   }
 
-  generateId(prefix: string): string {
+  generateId(prefix: string): string
+  {
     return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
   }
 }
 
 export const PRIORITY_ORDER: Priority[] = ["urgent", "high", "normal", "low"];
-export const PRIORITY_LABELS: Record<Priority, string> = {
+export const PRIORITY_LABELS: Record<Priority, string> =
+{
   urgent: "🔴 Urgent",
   high:   "🟠 Haute",
   normal: "🟢 Normale",
   low:    "🫙 Basse",
 };
-export const PRIORITY_COLORS: Record<Priority, string> = {
+export const PRIORITY_COLORS: Record<Priority, string> =
+{
   urgent: "#e55",
   high:   "#e96f00",
   normal: "#3a3",

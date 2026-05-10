@@ -1,4 +1,4 @@
-import { App, setIcon } from "obsidian";
+import { App, setIcon, Modal } from "obsidian";
 import type { KanbanBoardData, KanbanCard, KanbanColumn, Priority } from "./KanbanStore";
 import { KanbanStore, PRIORITY_ORDER, PRIORITY_LABELS, PRIORITY_COLORS } from "./KanbanStore";
 
@@ -99,7 +99,8 @@ export class KanbanBoard {
     cardsEl.addEventListener("dragleave", () => cardsEl.removeClass("mkb-drag-over"));
     cardsEl.addEventListener("drop", (e) => { e.preventDefault(); cardsEl.removeClass("mkb-drag-over"); this.onDrop(col.id); });
 
-    for (const card of cards) {
+    for (const card of cards)
+    {
       this.renderCard(cardsEl, card, col.id);
     }
 
@@ -107,7 +108,8 @@ export class KanbanBoard {
     addCardBtn.addEventListener("click", () => this.addCard(col.id));
   }
 
-  private renderCard(parent: HTMLElement, card: KanbanCard, colId: string): void {
+  private renderCard(parent: HTMLElement, card: KanbanCard, colId: string): void
+  {
     const cardEl = parent.createDiv("mkb-card");
     cardEl.draggable = true;
     cardEl.dataset.cardId = card.id;
@@ -198,7 +200,8 @@ export class KanbanBoard {
 
   // ─── Drag & Drop ─────────────────────────────────────────────────────────────
 
-  private onDrop(targetColId: string): void {
+  private onDrop(targetColId: string): void
+  {
     if (!this.dragCard || !this.dragSourceColId || this.dragSourceColId === targetColId) return;
     const srcCol = this.board.columns.find(c => c.id === this.dragSourceColId);
     const dstCol = this.board.columns.find(c => c.id === targetColId);
@@ -241,10 +244,25 @@ export class KanbanBoard {
     this.render();
   }
 
-  private async deleteColumn(colId: string): Promise<void> {
-    this.board.columns = this.board.columns.filter(c => c.id !== colId);
-    await this.persist();
-    this.render();
+  private async deleteColumn(colId: string): Promise<void>
+  {
+    const confirmed = await new Promise<boolean>(resolve =>
+    {
+      const m = new Modal(this.app);
+      m.contentEl.createEl("p", { text: "Supprimer cette colonne ?" });
+      m.contentEl.createEl("button", { text: "Confirmer", cls: "mod-warning" })
+        .addEventListener("click", () => { m.close(); resolve(true); });
+      m.contentEl.createEl("button", { text: "Annuler" })
+        .addEventListener("click", () => { m.close(); resolve(false); });
+      m.open();
+    });
+    if (!confirmed) return;
+    else
+    {
+      this.board.columns = this.board.columns.filter(c => c.id !== colId);
+      await this.persist();
+      this.render();
+    }
   }
 
   private async editColumnTitle(el: HTMLElement, col: KanbanColumn): Promise<void> {
@@ -271,12 +289,27 @@ export class KanbanBoard {
     this.render();
   }
 
-  private async deleteCard(cardId: string, colId: string): Promise<void> {
-    const col = this.board.columns.find(c => c.id === colId);
-    if (!col) return;
-    col.cards = col.cards.filter(c => c.id !== cardId);
-    await this.persist();
-    this.render();
+  private async deleteCard(cardId: string, colId: string): Promise<void>
+  {
+    const confirmed = await new Promise<boolean>(resolve =>
+    {
+      const m = new Modal(this.app);
+      m.contentEl.createEl("p", { text: "Supprimer cette tache ?" });
+      m.contentEl.createEl("button", { text: "Confirmer", cls: "mod-warning" })
+        .addEventListener("click", () => { m.close(); resolve(true); });
+      m.contentEl.createEl("button", { text: "Annuler" })
+        .addEventListener("click", () => { m.close(); resolve(false); });
+      m.open();
+    });
+    if (!confirmed) return;
+    else
+    {
+      const col = this.board.columns.find(c => c.id === colId);
+      if (!col) return;
+      col.cards = col.cards.filter(c => c.id !== cardId);
+      await this.persist();
+      this.render();
+    }
   }
 
   private async archiveCard(card: KanbanCard, colId: string): Promise<void> {
@@ -341,12 +374,15 @@ export class KanbanBoard {
 
   // ─── Utils ───────────────────────────────────────────────────────────────────
 
-  private async persist(): Promise<void> {
+  private async persist(): Promise<void>
+  {
     await this.store.saveBoard(this.board);
   }
 
-  private promptInline(placeholder: string): Promise<string | null> {
-    return new Promise((resolve) => {
+  private promptInline(placeholder: string): Promise<string | null>
+  {
+    return new Promise((resolve) =>
+    {
       const overlay = this.container.createDiv("mkb-editor-overlay");
       const box = overlay.createDiv("mkb-prompt-box");
       const input = box.createEl("input", { type: "text", placeholder });

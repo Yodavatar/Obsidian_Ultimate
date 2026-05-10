@@ -55,6 +55,15 @@ export class Obsidian_Ultimate_Settings_Tab extends PluginSettingTab
               {
                 this.plugin.registry.disable(module.id);
               }
+              
+              // Forcer le rechargement du plugin pour nettoyer les vues
+              // @ts-ignore
+              this.app.plugins.disablePlugin(this.plugin.manifest.id);
+              // @ts-ignore
+              await this.app.plugins.enablePlugin(this.plugin.manifest.id);
+              // Rouvrir les settings sur la bonne page
+              // @ts-ignore
+              this.app.setting.openTabById(this.plugin.manifest.id);
             });
         });
     }

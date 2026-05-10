@@ -6,6 +6,7 @@ import { DEFAULT_SETTINGS, type Obsidian_Ultimate_Settings } from "./shared/type
 
 //All modules one in all
 import { KanbanModule } from "./modules/kanban/KanbanModule";
+import { DashboardModule } from "./modules/dashboard/DashboardModule";
 
 export default class Obsidian_Ultimate extends Plugin
 {
@@ -16,7 +17,10 @@ export default class Obsidian_Ultimate extends Plugin
     console.log("[Obsidian Ultimate] Chargement...");
     await this.loadSettings();
     this.registry = new ModuleRegistry();
+
+    //All modules one in all
     this.registry.register(new KanbanModule(this.app, this));
+    this.registry.register(new DashboardModule(this.app, this));
 
     for (const [moduleId, enabled] of Object.entries(this.settings.enabledModules))
     {

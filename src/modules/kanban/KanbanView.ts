@@ -2,7 +2,7 @@ import { ItemView, WorkspaceLeaf, setIcon } from "obsidian";
 import type { KanbanStore, KanbanBoardData } from "./KanbanStore";
 import { KanbanBoard } from "./KanbanBoard";
 
-export const KANBAN_VIEW_TYPE = "mega-plugin-kanban";
+export const KANBAN_VIEW_TYPE = "obsidian_ultimate-kanban";
 
 export class KanbanView extends ItemView
 {
@@ -26,7 +26,7 @@ export class KanbanView extends ItemView
   }
   getIcon()
   {
-    return "layout-kanban";
+    return "kanban";
   }
 
   async onOpen(): Promise<void>
@@ -65,8 +65,7 @@ export class KanbanView extends ItemView
       if (this.currentBoard && b.id === this.currentBoard.id) opt.selected = true;
     }
 
-    const openBtn = bar.createEl("button", { cls: "mkb-btn mkb-btn-primary", text: "Ouvrir" });
-    openBtn.addEventListener("click", async () =>
+    select.addEventListener("change", async () =>
     {
       const board = await this.store.loadBoard(select.value);
       if (board) this.openBoard(board, root);
@@ -77,7 +76,8 @@ export class KanbanView extends ItemView
 
     const delBtn = bar.createEl("button", { cls: "mkb-btn-icon mkb-danger", title: "Supprimer ce board" });
     setIcon(delBtn, "trash");
-    delBtn.addEventListener("click", async () => {
+    delBtn.addEventListener("click", async () =>
+    {
       await this.store.deleteBoard(select.value);
       this.currentBoard = null;
       await this.renderBoardSelector();
@@ -91,28 +91,32 @@ export class KanbanView extends ItemView
       ? (await this.store.loadBoard(this.currentBoard.id)) ?? boards[0]
       : boards[0];
 
-    if (toOpen) {
+    if (toOpen)
+    {
       select.value = toOpen.id;
       this.openBoard(toOpen, root, boardContainer);
     }
   }
 
-  private openBoard(board: KanbanBoardData, root: HTMLElement, existingContainer?: HTMLElement): void {
+  private openBoard(board: KanbanBoardData, root: HTMLElement, existingContainer?: HTMLElement): void
+  {
     this.currentBoard = board;
     this.app.workspace.requestSaveLayout();
 
     // Remplacer la zone board
     let boardContainer = existingContainer ?? root.querySelector(".mkb-board-container") as HTMLElement;
-    if (!boardContainer) {
+    if (!boardContainer)
+    {
       boardContainer = root.createDiv("mkb-board-container");
     }
     boardContainer.empty();
 
     this.boardComponent = new KanbanBoard(this.app, this.store, board, boardContainer);
-    this.boardComponent.onBoardChange = () => {
-      // Rafraîchir le sélecteur si le titre change
+    this.boardComponent.onBoardChange = () =>
+    {
       const select = root.querySelector(".mkb-select") as HTMLSelectElement;
-      if (select) {
+      if (select)
+      {
         const opt = select.querySelector(`option[value="${board.id}"]`) as HTMLOptionElement;
         if (opt) opt.text = board.title;
       }
@@ -121,8 +125,10 @@ export class KanbanView extends ItemView
     this.boardComponent.render();
   }
 
-  private async createBoard(root: HTMLElement): Promise<void> {
-    const title = await new Promise<string | null>((resolve) => {
+  private async createBoard(root: HTMLElement): Promise<void>
+  {
+    const title = await new Promise<string | null>((resolve) =>
+    {
       const overlay = (this.containerEl.children[1] as HTMLElement).createDiv("mkb-editor-overlay");
       const box = overlay.createDiv("mkb-prompt-box");
       box.createEl("p", { text: "Nom du nouveau board" });
@@ -140,10 +146,12 @@ export class KanbanView extends ItemView
     await this.renderBoardSelector();
   }
 
-  // ─── Styles ──────────────────────────────────────────────────────────────────
 
-  private injectStyles(): void {
-    const styleId = "mega-plugin-kanban-styles";
+//Styles
+
+  private injectStyles(): void
+  {
+    const styleId = "obsidian_ultimate_kanban_styles";
     if (document.getElementById(styleId)) return;
     const style = document.createElement("style");
     style.id = styleId;
