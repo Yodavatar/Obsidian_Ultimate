@@ -1,18 +1,22 @@
 import { App, normalizePath } from "obsidian";
 
+export type Priority = "urgent" | "high" | "normal" | "low";
+
 export interface KanbanCard {
   id: string;
   title: string;
-  noteLink?: string;   // chemin vers une note Obsidian (ex: "projets/todo.md")
-  dueDate?: string;    // ISO 8601
+  noteLink?: string;
+  dueDate?: string;
   tags: string[];
   description?: string;
+  priority: Priority;
+  archived: boolean;
 }
 
 export interface KanbanColumn {
   id: string;
   title: string;
-  color?: string;      // couleur d'accent hex
+  color?: string;
   cards: KanbanCard[];
 }
 
@@ -26,10 +30,6 @@ export interface KanbanBoardData {
 
 const DATA_DIR = normalizePath(".mega-plugin/kanban");
 
-/**
- * Gère la lecture/écriture des boards Kanban dans le vault.
- * Chaque board = un fichier JSON dans .mega-plugin/kanban/<id>.json
- */
 export class KanbanStore {
   private app: App;
 
@@ -57,16 +57,21 @@ export class KanbanStore {
   async saveBoard(board: KanbanBoardData): Promise<void> {
     await this.ensureDataDir();
     board.updatedAt = new Date().toISOString();
-    const path = this.boardPath(board.id);
-    await this.app.vault.adapter.write(path, JSON.stringify(board, null, 2));
+    await this.app.vault.adapter.write(
+      this.boardPath(board.id),
+      JSON.stringify(board, null, 2)
+    );
   }
 
-  async listBoards(): Promise<string[]> {
+  async listBoards(): Promise<KanbanBoardData[]> {
     await this.ensureDataDir();
     const files = await this.app.vault.adapter.list(DATA_DIR);
-    return files.files
-      .filter((f) => f.endsWith(".json"))
-      .map((f) => f.replace(`${DATA_DIR}/`, "").replace(".json", ""));
+    const boards: KanbanBoardData[] = [];
+    for (const f of files.files.filter((f) => f.endsWith(".json"))) {
+      const raw = await this.app.vault.adapter.read(f);
+      try { boards.push(JSON.parse(raw)); } catch {}
+    }
+    return boards.sort((a, b) => a.title.localeCompare(b.title));
   }
 
   async deleteBoard(boardId: string): Promise<void> {
@@ -96,3 +101,17 @@ export class KanbanStore {
     return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
   }
 }
+
+export const PRIORITY_ORDER: Priority[] = ["urgent", "high", "normal", "low"];
+export const PRIORITY_LABELS: Record<Priority, string> = {
+  urgent: "🔴 Urgent",
+  high:   "🟠 Haute",
+  normal: "🟢 Normale",
+  low:    "🫙 Basse",
+};
+export const PRIORITY_COLORS: Record<Priority, string> = {
+  urgent: "#e55",
+  high:   "#e96f00",
+  normal: "#3a3",
+  low:    "#888",
+};

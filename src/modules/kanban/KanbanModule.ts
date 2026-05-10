@@ -19,24 +19,18 @@ export class KanbanModule implements IModule {
   }
 
   async onload(): Promise<void> {
-    // Enregistrer le type de vue
     this.plugin.registerView(
       KANBAN_VIEW_TYPE,
-      (leaf) => new KanbanView(leaf, this.store, "default-board")
+      (leaf) => new KanbanView(leaf, this.store)
     );
 
-    // Commande pour ouvrir le Kanban
     this.plugin.addCommand({
       id: "open-kanban",
       name: "Ouvrir le Kanban",
       callback: () => this.activateView(),
     });
 
-    // Icône dans la barre latérale
-    this.plugin.addRibbonIcon("layout-kanban", "Kanban", () => {
-      this.activateView();
-    });
-
+    this.plugin.addRibbonIcon("layout-kanban", "Kanban", () => this.activateView());
     console.log("[KanbanModule] Activé.");
   }
 
@@ -46,14 +40,8 @@ export class KanbanModule implements IModule {
   }
 
   private async activateView(): Promise<void> {
-    // Si la vue est déjà ouverte, on la focus
     const existing = this.app.workspace.getLeavesOfType(KANBAN_VIEW_TYPE);
-    if (existing.length > 0) {
-      this.app.workspace.revealLeaf(existing[0]);
-      return;
-    }
-
-    // Sinon on l'ouvre dans un nouvel onglet
+    if (existing.length > 0) { this.app.workspace.revealLeaf(existing[0]); return; }
     const leaf = this.app.workspace.getLeaf("tab");
     await leaf.setViewState({ type: KANBAN_VIEW_TYPE, active: true });
     this.app.workspace.revealLeaf(leaf);
