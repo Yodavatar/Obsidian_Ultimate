@@ -1,4 +1,4 @@
-import { ItemView, WorkspaceLeaf, TFile } from "obsidian";
+import { ItemView, WorkspaceLeaf, FileSystemAdapter } from "obsidian";
 import type { DashboardSettings } from "./DashboardSettings";
 import type { DashboardModule } from "./DashboardModule";
 
@@ -21,6 +21,11 @@ export class DashboardView extends ItemView {
   get s(): DashboardSettings { return this.module.getDashboardSettings(); }
 
   async onOpen(): Promise<void> {
+    // Garantir un seul dashboard ouvert à la fois
+    this.app.workspace.getLeavesOfType(DASHBOARD_VIEW_TYPE).forEach(leaf => {
+      if (leaf !== this.leaf) leaf.detach();
+    });
+
     this.injectStyles();
     this.render();
   }
@@ -48,30 +53,35 @@ export class DashboardView extends ItemView {
 
     if (this.s.showClock) this.renderClock(center);
     this.renderSearch(center);
-    if (this.s.showFileCount) this.renderStats(center);
-    if (this.s.quickLinks.length > 0 || true) this.renderQuickLinks(center);
   }
 
+  // ── Wallpaper ──────────────────────────────────────────────────────────────
+  // On utilise FileSystemAdapter.getResourcePath() car les fichiers stockés dans
+  // des dossiers cachés (ex. .Obsidian_Ultimate/) ne sont pas indexés en TFile.
   private applyWallpaper(root: HTMLElement): void {
     if (!this.s.wallpaperPath) return;
-    const file = this.app.vault.getAbstractFileByPath(this.s.wallpaperPath);
-    if (!(file instanceof TFile)) return;
-    root.style.backgroundImage = `url("${this.app.vault.getResourcePath(file)}")`;
+    const adapter = this.app.vault.adapter;
+    if (!(adapter instanceof FileSystemAdapter)) return;
+    const url = adapter.getResourcePath(this.s.wallpaperPath);
+    root.style.backgroundImage = `url("${url}")`;
+    root.style.backgroundSize = "cover";
+    root.style.backgroundPosition = "center";
   }
 
+  // ── Horloge ────────────────────────────────────────────────────────────────
   private renderClock(parent: HTMLElement): void {
     const wrap = parent.createDiv("dash-clock");
     const time = wrap.createDiv("dash-time");
     const date = wrap.createDiv("dash-date");
 
-    const DAYS = ["Dimanche","Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi"];
+    const DAYS   = ["Dimanche","Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi"];
     const MONTHS = ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
 
     const tick = () => {
       const now = new Date();
-      const h = String(now.getHours()).padStart(2,"0");
-      const m = String(now.getMinutes()).padStart(2,"0");
-      const s = String(now.getSeconds()).padStart(2,"0");
+      const h = String(now.getHours()).padStart(2, "0");
+      const m = String(now.getMinutes()).padStart(2, "0");
+      const s = String(now.getSeconds()).padStart(2, "0");
       time.textContent = this.s.showSeconds ? `${h}:${m}:${s}` : `${h}:${m}`;
       date.textContent = `${DAYS[now.getDay()]} ${now.getDate()} ${MONTHS[now.getMonth()]} ${now.getFullYear()}`;
     };
@@ -79,9 +89,15 @@ export class DashboardView extends ItemView {
     this.clockInterval = window.setInterval(tick, 1000);
   }
 
+  // ── Recherche ──────────────────────────────────────────────────────────────
+  // Les fichiers s'ouvrent dans le même leaf que le dashboard (this.leaf).
   private renderSearch(parent: HTMLElement): void {
     const wrap = parent.createDiv("dash-search-wrap");
-    const input = wrap.createEl("input", { type: "text", placeholder: "🔍  Rechercher dans le vault…", cls: "dash-search" });
+    const input = wrap.createEl("input", {
+      type: "text",
+      placeholder: "🔍  Rechercher dans le vault…",
+      cls: "dash-search",
+    });
     const results = wrap.createDiv("dash-results");
 
     input.addEventListener("input", () => {
@@ -90,15 +106,27 @@ export class DashboardView extends ItemView {
         results.empty();
         const q = input.value.trim().toLowerCase();
         if (!q) { results.style.display = "none"; return; }
-        const files = this.app.vault.getMarkdownFiles().filter(f => f.basename.toLowerCase().includes(q)).slice(0, 8);
+
+        const files = this.app.vault
+          .getMarkdownFiles()
+          .filter(f => f.basename.toLowerCase().includes(q))
+          .slice(0, 8);
+
         results.style.display = "block";
-        if (files.length === 0) { results.createDiv({ text: "Aucun résultat", cls: "dash-result-empty" }); return; }
+
+        if (files.length === 0) {
+          results.createDiv({ text: "Aucun résultat", cls: "dash-result-empty" });
+          return;
+        }
+
         for (const f of files) {
           const item = results.createDiv("dash-result-item");
           item.createSpan({ text: f.basename, cls: "dash-result-name" });
           item.createSpan({ text: f.parent?.path ?? "/", cls: "dash-result-path" });
+
+          // Ouvre le fichier dans le leaf du dashboard (remplace la vue)
           item.addEventListener("click", () => {
-            this.app.workspace.openLinkText(f.path, "", false);
+            this.leaf.openFile(f);
             results.style.display = "none";
             input.value = "";
           });
@@ -106,61 +134,18 @@ export class DashboardView extends ItemView {
       }, 150);
     });
 
-    input.addEventListener("keydown", e => { if (e.key === "Escape") { input.value = ""; results.style.display = "none"; } });
-    document.addEventListener("click", e => { if (!wrap.contains(e.target as Node)) results.style.display = "none"; }, { capture: false });
+    input.addEventListener("keydown", e => {
+      if (e.key === "Escape") { input.value = ""; results.style.display = "none"; }
+    });
+
+    document.addEventListener("click", e => {
+      if (!wrap.contains(e.target as Node)) results.style.display = "none";
+    });
+
     results.style.display = "none";
   }
 
-  private renderStats(parent: HTMLElement): void {
-    const count = this.app.vault.getMarkdownFiles().length;
-    parent.createDiv({ text: `${count} notes`, cls: "dash-stat" });
-  }
-
-  private renderQuickLinks(parent: HTMLElement): void {
-    const section = parent.createDiv("dash-links");
-    const list = section.createDiv("dash-links-list");
-
-    for (const link of this.s.quickLinks) {
-      const btn = list.createEl("button", { text: link.label, cls: "dash-link-btn" });
-      btn.addEventListener("click", () => this.app.workspace.openLinkText(link.path, "", false));
-      btn.addEventListener("contextmenu", async e => {
-        e.preventDefault();
-        this.s.quickLinks = this.s.quickLinks.filter(l => l.path !== link.path);
-        await this.module.saveDashboardSettings();
-        this.render();
-      });
-    }
-
-    const add = list.createEl("button", { text: "+ Ajouter", cls: "dash-link-btn dash-link-add" });
-    add.addEventListener("click", () => this.openAddLink());
-  }
-
-  private openAddLink(): void {
-    const overlay = this.makeOverlay();
-    const modal = overlay.createDiv("dash-modal");
-    modal.createEl("h3", { text: "Nouveau lien rapide" });
-
-    const r1 = modal.createDiv("dash-modal-row");
-    r1.createEl("label", { text: "Nom" });
-    const labelInput = r1.createEl("input", { type: "text", placeholder: "Mon projet" });
-
-    const r2 = modal.createDiv("dash-modal-row");
-    r2.createEl("label", { text: "Chemin (note.md)" });
-    const pathInput = r2.createEl("input", { type: "text", placeholder: "dossier/note.md" });
-
-    const btns = modal.createDiv("dash-modal-btns");
-    btns.createEl("button", { text: "Ajouter", cls: "dash-btn dash-btn-primary" }).addEventListener("click", async () => {
-      const label = labelInput.value.trim();
-      const path = pathInput.value.trim();
-      if (!label || !path) return;
-      this.s.quickLinks.push({ label, path });
-      await this.module.saveDashboardSettings();
-      overlay.remove();
-      this.render();
-    });
-    btns.createEl("button", { text: "Annuler", cls: "dash-btn" }).addEventListener("click", () => overlay.remove());
-  }
-
+  // ── Paramètres ─────────────────────────────────────────────────────────────
   private openSettings(): void {
     const root = this.containerEl.children[1] as HTMLElement;
     const existing = root.querySelector(".dash-overlay-modal");
@@ -172,14 +157,17 @@ export class DashboardView extends ItemView {
 
     this.settingToggle(panel, "Afficher l'horloge", "showClock");
     this.settingToggle(panel, "Afficher les secondes", "showSeconds");
-    this.settingToggle(panel, "Afficher le nombre de notes", "showFileCount");
     this.settingToggle(panel, "Ouvrir au démarrage", "openOnStartup");
 
-    // Wallpaper — file picker natif
+    // Fond d'écran
     const wr = panel.createDiv("dash-setting-row");
     wr.createSpan({ text: "Fond d'écran", cls: "dash-setting-label" });
     const wpRight = wr.createDiv("dash-setting-right");
-    const wpName = wpRight.createSpan({ text: this.s.wallpaperPath ? this.s.wallpaperPath.split("/").pop()! : "Aucun", cls: "dash-setting-val" });
+    const wpName = wpRight.createSpan({
+      text: this.s.wallpaperPath ? this.s.wallpaperPath.split("/").pop()! : "Aucun",
+      cls: "dash-setting-val",
+    });
+
     const wpBtn = wpRight.createEl("button", { text: "Choisir…", cls: "dash-btn" });
     wpBtn.addEventListener("click", () => {
       const fileInput = document.createElement("input");
@@ -188,27 +176,31 @@ export class DashboardView extends ItemView {
       fileInput.addEventListener("change", async () => {
         const file = fileInput.files?.[0];
         if (!file) return;
-        const destDir = ".Obsidian_Ultimate/dashboard";
+        const destDir  = ".Obsidian_Ultimate/dashboard";
         const destPath = `${destDir}/${file.name}`;
         if (!(await this.app.vault.adapter.exists(destDir))) {
           await this.app.vault.adapter.mkdir(destDir);
         }
-        const buffer = await file.arrayBuffer();
-        await this.app.vault.adapter.writeBinary(destPath, buffer);
+        await this.app.vault.adapter.writeBinary(destPath, await file.arrayBuffer());
         this.s.wallpaperPath = destPath;
         wpName.textContent = file.name;
         await this.module.saveDashboardSettings();
+        // Prévisualisation immédiate
+        const dashRoot = this.containerEl.children[1] as HTMLElement;
+        this.applyWallpaper(dashRoot);
       });
       fileInput.click();
     });
+
     const clearBtn = wpRight.createEl("button", { text: "✕", cls: "dash-btn", title: "Supprimer le fond" });
     clearBtn.addEventListener("click", async () => {
       this.s.wallpaperPath = "";
       wpName.textContent = "Aucun";
       await this.module.saveDashboardSettings();
+      (this.containerEl.children[1] as HTMLElement).style.backgroundImage = "";
     });
 
-    // Opacité
+    // Opacité de l'overlay
     const or = panel.createDiv("dash-setting-row");
     or.createSpan({ text: "Opacité overlay", cls: "dash-setting-label" });
     const orRight = or.createDiv("dash-setting-right");
@@ -230,74 +222,147 @@ export class DashboardView extends ItemView {
     row.createSpan({ text: label, cls: "dash-setting-label" });
     const toggle = row.createEl("input", { type: "checkbox" });
     toggle.checked = this.s[key] as boolean;
-    toggle.addEventListener("change", async () => { (this.s as any)[key] = toggle.checked; await this.module.saveDashboardSettings(); });
+    toggle.addEventListener("change", async () => {
+      (this.s as any)[key] = toggle.checked;
+      await this.module.saveDashboardSettings();
+    });
   }
 
   private makeOverlay(): HTMLElement {
     const root = this.containerEl.children[1] as HTMLElement;
     const overlay = root.createDiv("dash-overlay-modal");
-    overlay.addEventListener("click", e => { if (e.target === overlay) { overlay.remove(); this.render(); } });
+    overlay.addEventListener("click", e => {
+      if (e.target === overlay) { overlay.remove(); this.render(); }
+    });
     return overlay;
   }
 
+  // ── Styles ─────────────────────────────────────────────────────────────────
   private injectStyles(): void {
     const id = "obsidian_ultimate_dashboard_styles";
     if (document.getElementById(id)) return;
     const s = document.createElement("style");
     s.id = id;
     s.textContent = `
+      /* Racine */
       .dash-root {
-        height: 100%; width: 100%; position: relative;
-        background: var(--background-primary);
-        background-size: cover; background-position: center;
+        height: 100%;
+        width: 100%;
+        position: relative;
+        background-color: var(--background-primary);
         display: flex;
+        align-items: stretch;
       }
+
+      /* Overlay sombre sur le fond */
       .dash-overlay {
-        position: absolute; inset: 0;
-        background: rgba(0,0,0,calc(var(--dash-op, 0.5) * 1));
-        display: flex; flex-direction: column;
-        align-items: center; justify-content: center;
-        gap: 28px; padding: 32px;
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, calc(var(--dash-op, 0.45) * 1));
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 28px;
+        padding: 32px;
       }
+
+      /* Bouton engrenage */
       .dash-gear-btn {
-        position: absolute; top: 16px; right: 16px;
-        background: rgba(255,255,255,0.1);
-        border: 1px solid rgba(255,255,255,0.15);
-        border-radius: 8px; padding: 8px 9px;
-        color: rgba(255,255,255,0.7); cursor: pointer;
-        backdrop-filter: blur(6px); transition: all 0.2s; line-height: 0;
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 8px;
+        padding: 8px 9px;
+        color: rgba(255, 255, 255, 0.7);
+        cursor: pointer;
+        backdrop-filter: blur(6px);
+        transition: background 0.2s, color 0.2s;
+        line-height: 0;
       }
-      .dash-gear-btn:hover { background: rgba(255,255,255,0.2); color: white; }
+      .dash-gear-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+        color: #fff;
+      }
 
-      /* Clock */
-      .dash-clock { text-align: center; color: white; text-shadow: 0 2px 12px rgba(0,0,0,0.6); }
-      .dash-time { font-size: 6em; font-weight: 100; letter-spacing: 6px; line-height: 1; font-variant-numeric: tabular-nums; }
-      .dash-date { font-size: 1em; opacity: 0.8; margin-top: 6px; letter-spacing: 1px; }
+      /* Zone centrale */
+      .dash-center {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 24px;
+        width: 100%;
+      }
 
-      /* Search */
-      .dash-search-wrap { position: relative; width: 100%; max-width: 580px; }
+      /* Horloge */
+      .dash-clock {
+        text-align: center;
+        color: #fff;
+        text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6);
+      }
+      .dash-time {
+        font-size: 6em;
+        font-weight: 100;
+        letter-spacing: 6px;
+        line-height: 1;
+        font-variant-numeric: tabular-nums;
+      }
+      .dash-date {
+        font-size: 1em;
+        opacity: 0.8;
+        margin-top: 6px;
+        letter-spacing: 1px;
+      }
+
+      /* Barre de recherche */
+      .dash-search-wrap {
+        position: relative;
+        width: 100%;
+        max-width: 580px;
+      }
       .dash-search {
-        width: 100%; padding: 14px 22px; font-size: 1em;
-        border: 1px solid rgba(255,255,255,0.2);
+        width: 100%;
+        padding: 14px 22px;
+        font-size: 1em;
+        border: 1px solid rgba(255, 255, 255, 0.2);
         border-radius: 40px;
-        background: rgba(255,255,255,0.1);
+        background: rgba(255, 255, 255, 0.1);
         backdrop-filter: blur(12px);
-        color: white; outline: none;
-        box-shadow: 0 4px 24px rgba(0,0,0,0.2);
-        transition: all 0.2s; box-sizing: border-box;
+        color: #fff;
+        outline: none;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+        transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+        box-sizing: border-box;
       }
-      .dash-search::placeholder { color: rgba(255,255,255,0.5); }
-      .dash-search:focus { background: rgba(255,255,255,0.18); border-color: rgba(255,255,255,0.35); box-shadow: 0 4px 32px rgba(0,0,0,0.3); }
+      .dash-search::placeholder { color: rgba(255, 255, 255, 0.5); }
+      .dash-search:focus {
+        background: rgba(255, 255, 255, 0.18);
+        border-color: rgba(255, 255, 255, 0.35);
+        box-shadow: 0 4px 32px rgba(0, 0, 0, 0.3);
+      }
+
+      /* Résultats */
       .dash-results {
-        position: absolute; top: calc(100% + 8px); left: 0; right: 0;
+        position: absolute;
+        top: calc(100% + 8px);
+        left: 0;
+        right: 0;
         background: var(--background-primary);
         border: 1px solid var(--background-modifier-border);
-        border-radius: 14px; overflow: hidden;
-        box-shadow: 0 12px 40px rgba(0,0,0,0.4); z-index: 50;
+        border-radius: 14px;
+        overflow: hidden;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+        z-index: 50;
       }
       .dash-result-item {
-        display: flex; align-items: center; justify-content: space-between;
-        padding: 11px 16px; cursor: pointer; gap: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 11px 16px;
+        cursor: pointer;
+        gap: 12px;
         border-bottom: 1px solid var(--background-modifier-border);
         transition: background 0.15s;
       }
@@ -307,60 +372,88 @@ export class DashboardView extends ItemView {
       .dash-result-path { font-size: 0.75em; color: var(--text-muted); }
       .dash-result-empty { padding: 14px 16px; color: var(--text-muted); font-size: 0.88em; }
 
-      /* Stats */
-      .dash-stat { color: rgba(255,255,255,0.55); font-size: 0.8em; letter-spacing: 2px; text-transform: uppercase; }
-
-      /* Quick links */
-      .dash-links { display: flex; flex-direction: column; align-items: center; gap: 10px; }
-      .dash-links-list { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-width: 640px; }
-      .dash-link-btn {
-        background: rgba(255,255,255,0.1);
-        border: 1px solid rgba(255,255,255,0.18);
-        border-radius: 22px; padding: 7px 18px;
-        color: rgba(255,255,255,0.85); cursor: pointer; font-size: 0.85em;
-        backdrop-filter: blur(6px); transition: all 0.2s;
-      }
-      .dash-link-btn:hover { background: rgba(255,255,255,0.22); color: white; transform: translateY(-1px); }
-      .dash-link-add { border-style: dashed; opacity: 0.55; }
-      .dash-link-add:hover { opacity: 1; }
-
-      /* Modal overlay */
+      /* Overlay modal (paramètres / ajout) */
       .dash-overlay-modal {
-        position: absolute; inset: 0;
-        background: rgba(0,0,0,0.55);
-        display: flex; align-items: center; justify-content: center; z-index: 100;
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.55);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
         backdrop-filter: blur(2px);
       }
       .dash-modal {
         background: var(--background-primary);
         border: 1px solid var(--background-modifier-border);
-        border-radius: 14px; padding: 28px; min-width: 340px; max-width: 460px; width: 100%;
-        display: flex; flex-direction: column; gap: 14px;
-        box-shadow: 0 16px 48px rgba(0,0,0,0.5);
+        border-radius: 14px;
+        padding: 28px;
+        min-width: 340px;
+        max-width: 460px;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
       }
       .dash-modal h3 { margin: 0; font-size: 1.1em; }
-      .dash-modal-row { display: flex; flex-direction: column; gap: 5px; }
-      .dash-modal-row label { font-size: 0.78em; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
-      .dash-modal-row input { padding: 8px 12px; border-radius: 8px; border: 1px solid var(--background-modifier-border); background: var(--background-secondary); color: var(--text-normal); font-size: 0.9em; outline: none; }
-      .dash-modal-row input:focus { border-color: var(--interactive-accent); }
-      .dash-modal-btns { display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px; }
 
-      /* Settings panel */
-      .dash-settings { min-width: 380px; }
+      /* Panneau paramètres */
+      .dash-settings { min-width: 400px; }
       .dash-setting-row {
-        display: flex; align-items: center; justify-content: space-between;
-        padding: 10px 0; border-bottom: 1px solid var(--background-modifier-border); gap: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--background-modifier-border);
+        gap: 16px;
       }
       .dash-setting-row:last-of-type { border-bottom: none; }
-      .dash-setting-label { font-size: 0.88em; }
-      .dash-setting-val { font-size: 0.8em; color: var(--text-muted); min-width: 28px; text-align: right; }
-      .dash-setting-row input[type="range"] { flex: 1; max-width: 120px; accent-color: var(--interactive-accent); }
-      .dash-setting-row input[type="text"] { flex: 1; padding: 5px 9px; border-radius: 6px; border: 1px solid var(--background-modifier-border); background: var(--background-secondary); color: var(--text-normal); font-size: 0.85em; min-width: 0; outline: none; }
+      .dash-setting-label { font-size: 0.88em; flex: 1; }
+      .dash-setting-right {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .dash-setting-val {
+        font-size: 0.8em;
+        color: var(--text-muted);
+        min-width: 60px;
+        text-align: right;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 120px;
+      }
+      .dash-setting-row input[type="range"] {
+        width: 100px;
+        accent-color: var(--interactive-accent);
+      }
+      .dash-setting-row input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        accent-color: var(--interactive-accent);
+        cursor: pointer;
+      }
 
-      /* Buttons */
-      .dash-btn { border-radius: 8px; padding: 8px 16px; font-size: 0.85em; cursor: pointer; border: 1px solid var(--background-modifier-border); background: var(--background-secondary); color: var(--text-normal); transition: background 0.15s; }
+      /* Boutons génériques */
+      .dash-btn {
+        border-radius: 8px;
+        padding: 7px 14px;
+        font-size: 0.82em;
+        cursor: pointer;
+        border: 1px solid var(--background-modifier-border);
+        background: var(--background-secondary);
+        color: var(--text-normal);
+        transition: background 0.15s;
+        white-space: nowrap;
+      }
       .dash-btn:hover { background: var(--background-modifier-hover); }
-      .dash-btn-primary { background: var(--interactive-accent); color: var(--text-on-accent); border-color: transparent; }
+      .dash-btn-primary {
+        background: var(--interactive-accent);
+        color: var(--text-on-accent);
+        border-color: transparent;
+      }
       .dash-btn-primary:hover { filter: brightness(1.1); }
     `;
     document.head.appendChild(s);

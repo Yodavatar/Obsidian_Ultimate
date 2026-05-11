@@ -224,7 +224,13 @@ export class KanbanView extends ItemView
       .mkb-editor-modal, .mkb-prompt-box { background: var(--background-primary); border: 1px solid var(--background-modifier-border); border-radius: 10px; padding: 20px; min-width: 300px; display: flex; flex-direction: column; gap: 10px; }
       .mkb-editor-row { display: flex; flex-direction: column; gap: 4px; }
       .mkb-editor-row label { font-size: 0.8em; color: var(--text-muted); }
-      .mkb-editor-btns { display: flex; gap: 8px; justify-content: flex-end; margin-top: 8px; }
+      .mkb-editor-btns { display: flex; gap: 8px; justify-content: flex-end; margin-top: 8px; 
+      
+      /* Column menu popup */
+      .mkb-column-menu-popup { background: var(--background-primary); border: 1px solid var(--background-modifier-border); border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); display: flex; flex-direction: column; min-width: 160px; }
+      .mkb-menu-item { background: transparent; border: none; text-align: left; padding: 8px 12px; cursor: pointer; color: var(--text-normal); font-size: 0.85em; transition: background 0.1s; }
+      .mkb-menu-item:hover { background: var(--background-modifier-hover); }
+      .mkb-menu-item.mkb-menu-danger:hover { background: var(--color-red-rgb, rgba(229, 85, 85, 0.2)); color: var(--color-red); }
     `;
     document.head.appendChild(style);
   }

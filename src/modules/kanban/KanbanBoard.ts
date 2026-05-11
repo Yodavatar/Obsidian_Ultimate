@@ -90,9 +90,9 @@ export class KanbanBoard {
 
     colHeader.createEl("span", { text: String(cards.length), cls: "mkb-column-count" });
 
-    const delColBtn = colHeader.createEl("button", { cls: "mkb-btn-icon" });
-    setIcon(delColBtn, "trash");
-    delColBtn.addEventListener("click", () => this.deleteColumn(col.id));
+    const menuBtn = colHeader.createEl("button", { cls: "mkb-btn-icon mkb-column-menu" });
+    setIcon(menuBtn, "ellipsis-vertical");
+    menuBtn.addEventListener("click", () => this.openColumnMenu(menuBtn, col));
 
     const cardsEl = colEl.createDiv("mkb-cards");
     cardsEl.addEventListener("dragover", (e) => { e.preventDefault(); cardsEl.addClass("mkb-drag-over"); });
@@ -265,7 +265,8 @@ export class KanbanBoard {
     }
   }
 
-  private async editColumnTitle(el: HTMLElement, col: KanbanColumn): Promise<void> {
+  private async editColumnTitle(el: HTMLElement, col: KanbanColumn): Promise<void>
+  {
     const input = document.createElement("input");
     input.type = "text";
     input.value = col.title;
@@ -275,6 +276,79 @@ export class KanbanBoard {
     const save = async () => { col.title = input.value.trim() || col.title; await this.persist(); this.render(); };
     input.addEventListener("blur", save);
     input.addEventListener("keydown", (e) => { if (e.key === "Enter") input.blur(); if (e.key === "Escape") this.render(); });
+  }
+
+  private openColumnMenu(triggerEl: HTMLElement, col: KanbanColumn): void
+  {
+    const existing = document.querySelectorAll(".mkb-column-menu-popup");
+    existing.forEach(el => el.remove());
+
+    const popup = document.createElement("div");
+    popup.className = "mkb-column-menu-popup";
+    popup.style.position = "fixed";
+    popup.style.zIndex = "1000";
+
+    const rect = triggerEl.getBoundingClientRect();
+    popup.style.top = (rect.bottom + 4) + "px";
+    popup.style.left = (rect.left - 150) + "px";
+
+    const leftBtn = popup.createEl("button", { text: "← Décaler à gauche", cls: "mkb-menu-item" });
+    leftBtn.addEventListener("click", (e) =>
+    {
+      e.stopPropagation();
+      const idx = this.board.columns.indexOf(col);
+      if (idx > 0)
+      {
+        [this.board.columns[idx], this.board.columns[idx - 1]] = [this.board.columns[idx - 1], this.board.columns[idx]];
+        this.persist();
+        this.render();
+      }
+    });
+
+    const rightBtn = popup.createEl("button", { text: "Décaler à droite →", cls: "mkb-menu-item" });
+    rightBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const idx = this.board.columns.indexOf(col);
+      if (idx < this.board.columns.length - 1)
+      {
+        [this.board.columns[idx], this.board.columns[idx + 1]] = [this.board.columns[idx + 1], this.board.columns[idx]];
+        this.persist();
+        this.render();
+      }
+    });
+
+    const colorBtn = popup.createEl("button", { text: "Changer couleur", cls: "mkb-menu-item" });
+    colorBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const input = document.createElement("input");
+      input.type = "color";
+      input.value = col.color || "#6c8ebf";
+      input.addEventListener("change", async () =>
+      {
+        col.color = input.value;
+        await this.persist();
+        this.render();
+      });
+      input.click();
+    });
+
+    const delBtn = popup.createEl("button", { text: "Supprimer", cls: "mkb-menu-item mkb-menu-danger" });
+    delBtn.addEventListener("click", (e) =>
+    {
+      e.stopPropagation();
+      this.deleteColumn(col.id);
+    });
+
+    document.body.appendChild(popup);
+
+    setTimeout(() =>
+    {
+      document.addEventListener("click", function closeMenu()
+      {
+        popup.remove();
+        document.removeEventListener("click", closeMenu);
+      });
+    }, 0);
   }
 
   // ─── Cards ───────────────────────────────────────────────────────────────────
