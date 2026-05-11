@@ -32,10 +32,22 @@ Obsidian Ultimate is open to contribution.
 
 __**1 - Dashboard **__
 
+Dashboard in a new window.<br>
+
+- Quick links<br>
+- Urgent tasks<br>
+- Next tasks<br>
+- + More customization options<br>
+
 __**2 - Better Kanban **__
 
 Kanban is a methode of organisation for a to do list.
 
+- Support for multiple boards
+- Multiple columns (move left/right, change color, delete)
+- Create tasks (multiple priorities, due dates, links, tags, delete)
+- Archiving features for notes
+- Sort tasks 
 
 
 ## Installation
