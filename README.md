@@ -37,7 +37,7 @@ Dashboard in a new window.<br>
 - Quick links<br>
 - Urgent tasks<br>
 - Next tasks<br>
-- + More customization options<br>
+- +More customization options<br>
 
 __**2 - Better Kanban**__
 
