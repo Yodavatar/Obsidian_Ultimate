@@ -30,7 +30,7 @@ Obsidian Ultimate is open to contribution.
 
 ## Features
 
-__**1 - Dashboard **__
+__**1 - Dashboard**__
 
 Dashboard in a new window.<br>
 
@@ -39,7 +39,7 @@ Dashboard in a new window.<br>
 - Next tasks<br>
 - + More customization options<br>
 
-__**2 - Better Kanban **__
+__**2 - Better Kanban**__
 
 Kanban is a methode of organisation for a to do list.
 
