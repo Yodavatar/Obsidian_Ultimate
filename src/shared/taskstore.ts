@@ -1,0 +1,196 @@
+import { App, normalizePath } from "obsidian";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+export type Priority = "urgent" | "high" | "normal" | "low";
+export type TaskSource = "kanban" | "todo" | "calendar" | string;
+
+export interface Task {
+  id:          string;
+  title:       string;
+  done:        boolean;
+  archived:    boolean;
+  priority:    Priority;
+  tags:        string[];
+  dueDate?:    string;       // ISO date string "YYYY-MM-DD"
+  noteLink?:   string;       // [[Note]] wikilink
+  description?: string;
+
+  // Contexte source — chaque module remplit ce qui le concerne
+  source:      TaskSource;
+  boardId?:    string;       // Kanban
+  columnId?:   string;       // Kanban
+
+  createdAt:   string;       // ISO datetime
+  updatedAt:   string;       // ISO datetime
+}
+
+export interface TaskFilter {
+  source?:   TaskSource;
+  boardId?:  string;
+  columnId?: string;
+  done?:     boolean;
+  archived?: boolean;
+  dueDate?:  string;         // filtre exact sur la date
+  tag?:      string;
+}
+
+type ChangeEvent = "add" | "update" | "delete";
+type ChangeListener = (event: ChangeEvent, task: Task) => void;
+
+// ─── Constantes ───────────────────────────────────────────────────────────────
+
+const DATA_PATH = normalizePath(".obsidian_ultimate/tasks.json");
+
+// ─── TaskStore ────────────────────────────────────────────────────────────────
+
+export class TaskStore
+{
+  private app:       App;
+  private tasks:     Map<string, Task> = new Map();
+  private listeners: ChangeListener[]  = [];
+  private loaded     = false;
+
+  constructor(app: App)
+  {
+    this.app = app;
+  }
+
+  // ── Initialisation ──────────────────────────────────────────────────────────
+
+  async load(): Promise<void>
+  {
+    if (this.loaded) return;
+
+    const exists = await this.app.vault.adapter.exists(DATA_PATH);
+    if (exists)
+    {
+      const raw = await this.app.vault.adapter.read(DATA_PATH);
+      try
+      {
+        const arr: Task[] = JSON.parse(raw);
+        for (const t of arr) this.tasks.set(t.id, t);
+      }
+      catch (e) { console.error("[TaskStore] Erreur de parsing tasks.json", e); }
+    }
+
+    this.loaded = true;
+  }
+
+  private async persist(): Promise<void>
+  {
+    const dir = normalizePath(".obsidian_ultimate");
+    if (!(await this.app.vault.adapter.exists(dir)))
+      await this.app.vault.adapter.mkdir(dir);
+
+    const arr = Array.from(this.tasks.values());
+    await this.app.vault.adapter.write(DATA_PATH, JSON.stringify(arr, null, 2));
+  }
+
+  // ── API de lecture ──────────────────────────────────────────────────────────
+
+  /**
+   * Retourne les tasks filtrées.
+   * Tous les critères sont combinés en AND.
+   */
+  getTasks(filter: TaskFilter = {}): Task[]
+  {
+    return Array.from(this.tasks.values()).filter(t =>
+    {
+      if (filter.source   !== undefined && t.source   !== filter.source)   return false;
+      if (filter.boardId  !== undefined && t.boardId  !== filter.boardId)  return false;
+      if (filter.columnId !== undefined && t.columnId !== filter.columnId) return false;
+      if (filter.done     !== undefined && t.done     !== filter.done)     return false;
+      if (filter.archived !== undefined && t.archived !== filter.archived) return false;
+      if (filter.dueDate  !== undefined && t.dueDate  !== filter.dueDate)  return false;
+      if (filter.tag      !== undefined && !t.tags.includes(filter.tag))   return false;
+      return true;
+    });
+  }
+
+  getTask(id: string): Task | undefined
+  {
+    return this.tasks.get(id);
+  }
+
+  // ── API d'écriture ──────────────────────────────────────────────────────────
+
+  async addTask(task: Omit<Task, "createdAt" | "updatedAt">): Promise<Task>
+  {
+    const now  = new Date().toISOString();
+    const full: Task = { ...task, createdAt: now, updatedAt: now };
+    this.tasks.set(full.id, full);
+    await this.persist();
+    this.emit("add", full);
+    return full;
+  }
+
+  async updateTask(id: string, changes: Partial<Omit<Task, "id" | "createdAt">>): Promise<Task | null>
+  {
+    const existing = this.tasks.get(id);
+    if (!existing) return null;
+
+    const updated: Task = { ...existing, ...changes, updatedAt: new Date().toISOString() };
+    this.tasks.set(id, updated);
+    await this.persist();
+    this.emit("update", updated);
+    return updated;
+  }
+
+  async deleteTask(id: string): Promise<boolean>
+  {
+    const task = this.tasks.get(id);
+    if (!task) return false;
+    this.tasks.delete(id);
+    await this.persist();
+    this.emit("delete", task);
+    return true;
+  }
+
+  /** Supprime toutes les tasks liées à un board (nettoyage à la suppression d'un board). */
+  async deleteTasksByBoard(boardId: string): Promise<void>
+  {
+    const toDelete = this.getTasks({ boardId });
+    for (const t of toDelete) this.tasks.delete(t.id);
+    if (toDelete.length > 0) await this.persist();
+  }
+
+  // ── Helpers ─────────────────────────────────────────────────────────────────
+
+  generateId(prefix: string): string
+  {
+    return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+  }
+
+  // ── Événements ──────────────────────────────────────────────────────────────
+
+  on(listener: ChangeListener): () => void
+  {
+    this.listeners.push(listener);
+    // Retourne un unsubscribe
+    return () => { this.listeners = this.listeners.filter(l => l !== listener); };
+  }
+
+  private emit(event: ChangeEvent, task: Task): void
+  {
+    for (const l of this.listeners) l(event, task);
+  }
+}
+
+// ─── Constantes partagées ─────────────────────────────────────────────────────
+
+export const PRIORITY_ORDER: Priority[] = ["urgent", "high", "normal", "low"];
+export const PRIORITY_LABELS: Record<Priority, string> =
+{
+  urgent: "🔴 Urgent",
+  high:   "🟠 Haute",
+  normal: "🟢 Normale",
+  low:    "🫙 Basse",
+};
+export const PRIORITY_COLORS: Record<Priority, string> =
+{
+  urgent: "#e55",
+  high:   "#e96f00",
+  normal: "#3a3",
+  low:    "#888",
+};

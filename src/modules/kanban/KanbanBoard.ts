@@ -15,62 +15,65 @@ export class KanbanBoard {
   private dragSourceColId: string | null = null;
   onBoardChange?: () => void;
 
-  constructor(app: App, store: KanbanStore, board: KanbanBoardData, container: HTMLElement) {
+  constructor(app: App, store: KanbanStore, board: KanbanBoardData, container: HTMLElement)
+  {
     this.app = app;
     this.store = store;
     this.board = board;
     this.container = container;
   }
 
-  render(): void {
+  render(): void
+  {
     this.container.empty();
     this.container.addClass("mkb-board");
 
     this.renderHeader();
 
     const columnsEl = this.container.createDiv("mkb-columns");
-    for (const col of this.board.columns) {
+    for (const col of this.board.columns)
+    {
       this.renderColumn(columnsEl, col);
     }
-
-    // Zone archives
-    if (this.showArchived) {
+    if (this.showArchived)
+    {
       this.renderArchivedSection();
     }
   }
 
-  private renderHeader(): void {
+  private renderHeader(): void
+  {
     const header = this.container.createDiv("mkb-board-header");
 
-    // Titre éditable
     const titleEl = header.createEl("h2", { text: this.board.title, cls: "mkb-board-title" });
     titleEl.addEventListener("dblclick", () => this.editBoardTitle(titleEl));
 
     const actions = header.createDiv("mkb-header-actions");
 
-    // Tri priorité
     const sortBtn = actions.createEl("button", { cls: "mkb-btn mkb-btn-secondary", text: this.sortOrder === "asc" ? "↑ Priorité" : this.sortOrder === "desc" ? "↓ Priorité" : "⇅ Priorité" });
-    sortBtn.addEventListener("click", () => {
+    sortBtn.addEventListener("click", () =>
+    {
       this.sortOrder = this.sortOrder === null ? "asc" : this.sortOrder === "asc" ? "desc" : null;
       this.render();
     });
 
-    // Toggle archives
     const archiveBtn = actions.createEl("button", { cls: `mkb-btn mkb-btn-secondary ${this.showArchived ? "mkb-active" : ""}`, text: this.showArchived ? "🗄 Cacher archives" : "🗄 Archives" });
-    archiveBtn.addEventListener("click", () => {
+    archiveBtn.addEventListener("click", () =>
+    {
       this.showArchived = !this.showArchived;
       this.render();
     });
 
-    // Nouvelle colonne
     const addColBtn = actions.createEl("button", { cls: "mkb-btn mkb-btn-secondary", text: "+ Colonne" });
     addColBtn.addEventListener("click", () => this.addColumn());
   }
 
-  private getSortedCards(cards: KanbanCard[]): KanbanCard[] {
+  private getSortedCards(cards: KanbanCard[]): KanbanCard[]
+  {
     const active = cards.filter(c => !c.archived);
     if (!this.sortOrder) return active;
-    return [...active].sort((a, b) => {
+    return [...active].sort((a, b) =>
+    {
       const ai = PRIORITY_ORDER.indexOf(a.priority ?? "normal");
       const bi = PRIORITY_ORDER.indexOf(b.priority ?? "normal");
       return this.sortOrder === "asc" ? ai - bi : bi - ai;

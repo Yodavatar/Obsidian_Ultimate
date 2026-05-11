@@ -22,11 +22,19 @@ The goal of Obsidian Ultimate is to make Obsidian<br>
 as powerful as a professional tool (like Notion),<br>
 but 100% local and open source.<br><br>
 
+Be as productive as possible by staying in control of your data.<br>
+There are many ways to be more productive;<br>
+the methods we are trying to implement are [here](https://www.todoist.com/fr/productivity-methods).<br>
+
 Obsidian Ultimate is open to contribution.
 
 ## Features
 
-__**1 - Better Window**__
+__**1 - Dashboard **__
+
+__**2 - Better Kanban **__
+
+Kanban is a methode of organisation for a to do list.
 
 
 
