@@ -68,7 +68,7 @@ To install Obsidian_Ultimate, you can:
 
 ## Usage
 
-To use Obsidian_Ultimate you need to have last obsidian's version.<br>
+To use Obsidian Ultimate you need to have last obsidian's version.<br>
 You can install Obsidian on [here](https://obsidian.md/download)<br><br>
 
 <img width="470" height="270" alt="image" src="https://github.com/user-attachments/assets/ab6c8a58-fc32-497b-b1cc-6db0a27104a4" /><br>
