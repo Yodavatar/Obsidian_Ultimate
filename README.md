@@ -30,7 +30,12 @@ Obsidian Ultimate is open to contribution.
 
 ## Features
 
-__**1 - Dashboard**__
+__**1 - Activated/Desactivated module**__
+
+<img width="415" height="320" alt="image" src="https://github.com/user-attachments/assets/faab3fca-f022-43d5-a7a9-27b03a7f1cd1" />
+Enable or disable the module you need, in the Ultimate Obsidian settings.<br>
+
+__**2 - Dashboard module**__
 
 Dashboard in a new window.<br>
 
@@ -39,7 +44,7 @@ Dashboard in a new window.<br>
 - Next tasks<br>
 - +More customization options<br>
 
-__**2 - Better Kanban**__
+__**1 - Better Kanban module**__
 
 Kanban is a methode of organisation for a to do list.
 
