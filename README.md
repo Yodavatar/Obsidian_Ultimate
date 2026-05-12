@@ -17,8 +17,6 @@ __**Version 0.1.0**__ <br>
 
 ## Introduction
 
-<img width="1000" height="600" alt="image" src="https://github.com/user-attachments/assets/7d687af3-eb92-4c49-a3ea-baaf3dce81c6" />
-
 The goal of Obsidian Ultimate is to make Obsidian<br>
 as powerful as a professional tool (like Notion),<br>
 but 100% local and open source.<br><br>
