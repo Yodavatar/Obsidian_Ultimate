@@ -76,14 +76,21 @@ You can install Obsidian on [here](https://obsidian.md/download)<br><br>
 Go to settings, on the Community plugins<br>
 Then you need to activate community plugins.<br>
 
+
+
+Put the project in the folder "pluggin".<br>
+
+<img width="269" height="192" alt="image" src="https://github.com/user-attachments/assets/c50001d9-57a3-470f-9529-a86e2396ed9a" />
+
 Install dependencies<br>
    ```bash
     npm install
-    npm run build //In the good folder
+    npm run build //run in the good folder
    ```
-
-Put the project in
-<img width="269" height="192" alt="image" src="https://github.com/user-attachments/assets/c50001d9-57a3-470f-9529-a86e2396ed9a" />
+Now you return in the Community plugins.<br>
+You you should see that the pluggin.<br>
+The final step is to activate the plugin. <br>
+<img width="1625" height="929" alt="image" src="https://github.com/user-attachments/assets/3538d300-c564-42c0-9839-ed2cf28022b6" />
 
 
 ## Contribution
