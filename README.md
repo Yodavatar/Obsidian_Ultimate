@@ -115,7 +115,7 @@ __**If you want contribute to this project.**__
 This project is licensed under the agpl-3.0.<br>
 See the [GNU AFFERO GENERAL PUBLIC LICENSE](LICENSE) file for details.<br>
 
-## Dscussion
+## Discussions
 
 The Discussions are open [here](https://github.com/Yodavatar/Obsidian_Ultimate/discussions).
 
