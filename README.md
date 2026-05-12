@@ -32,8 +32,8 @@ Obsidian Ultimate is open to contribution.
 
 __**1 - Activated/Desactivated module**__
 
-<img width="415" height="320" alt="image" src="https://github.com/user-attachments/assets/faab3fca-f022-43d5-a7a9-27b03a7f1cd1" />
 Enable or disable the module you need, in the Ultimate Obsidian settings.<br>
+<img width="415" height="320" alt="image" src="https://github.com/user-attachments/assets/faab3fca-f022-43d5-a7a9-27b03a7f1cd1" />
 
 __**2 - Dashboard module**__
 
