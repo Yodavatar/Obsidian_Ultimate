@@ -3,6 +3,9 @@ This project was not **finished**.<br>
 __**Version 0.1.0**__<br>
 [![wakatime](https://wakatime.com/badge/user/17a8cdf0-54fb-45e9-92bc-ada49bd926d7/project/21d8cd64-c06f-4a00-b4db-6a0f328fb1d4.svg)](https://wakatime.com/badge/user/17a8cdf0-54fb-45e9-92bc-ada49bd926d7/project/21d8cd64-c06f-4a00-b4db-6a0f328fb1d4)
 
+<img width="510" height="350" alt="image" src="https://github.com/user-attachments/assets/7d687af3-eb92-4c49-a3ea-baaf3dce81c6" />
+
+
 
 ![Gif not finish project](https://media.tenor.com/ccJ5HaakDBAAAAAj/not-right-now-man-bill-frazier.gif)
 
