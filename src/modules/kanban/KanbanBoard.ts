@@ -1,10 +1,12 @@
 import { App, setIcon, Modal } from "obsidian";
 import type { KanbanBoardData, KanbanCard, KanbanColumn, Priority } from "./KanbanStore";
 import { KanbanStore, PRIORITY_ORDER, PRIORITY_LABELS, PRIORITY_COLORS } from "./KanbanStore";
+import { t, onLanguageChange } from "../../core/i18n";
 
 type SortOrder = "asc" | "desc" | null;
 
-export class KanbanBoard {
+export class KanbanBoard
+{
   private app: App;
   private store: KanbanStore;
   private board: KanbanBoardData;
@@ -50,21 +52,21 @@ export class KanbanBoard {
 
     const actions = header.createDiv("mkb-header-actions");
 
-    const sortBtn = actions.createEl("button", { cls: "mkb-btn mkb-btn-secondary", text: this.sortOrder === "asc" ? "↑ Priorité" : this.sortOrder === "desc" ? "↓ Priorité" : "⇅ Priorité" });
+    const sortBtn = actions.createEl("button", { cls: "mkb-btn mkb-btn-secondary", text: this.sortOrder === "asc" ? t(127) : this.sortOrder === "desc" ? t(128) : t(129) });
     sortBtn.addEventListener("click", () =>
     {
       this.sortOrder = this.sortOrder === null ? "asc" : this.sortOrder === "asc" ? "desc" : null;
       this.render();
     });
 
-    const archiveBtn = actions.createEl("button", { cls: `mkb-btn mkb-btn-secondary ${this.showArchived ? "mkb-active" : ""}`, text: this.showArchived ? "🗄 Cacher archives" : "🗄 Archives" });
+    const archiveBtn = actions.createEl("button", { cls: `mkb-btn mkb-btn-secondary ${this.showArchived ? "mkb-active" : ""}`, text: this.showArchived ? t(124) : t(123) });
     archiveBtn.addEventListener("click", () =>
     {
       this.showArchived = !this.showArchived;
       this.render();
     });
 
-    const addColBtn = actions.createEl("button", { cls: "mkb-btn mkb-btn-secondary", text: "+ Colonne" });
+    const addColBtn = actions.createEl("button", { cls: "mkb-btn mkb-btn-secondary", text: t(110) });
     addColBtn.addEventListener("click", () => this.addColumn());
   }
 
@@ -107,7 +109,7 @@ export class KanbanBoard {
       this.renderCard(cardsEl, card, col.id);
     }
 
-    const addCardBtn = colEl.createEl("button", { cls: "mkb-btn mkb-btn-add-card", text: "+ Carte" });
+    const addCardBtn = colEl.createEl("button", { cls: "mkb-btn mkb-btn-add-card", text: t(108) });
     addCardBtn.addEventListener("click", () => this.addCard(col.id));
   }
 
@@ -130,20 +132,30 @@ export class KanbanBoard {
     const titleEl = cardEl.createEl("span", { text: card.title, cls: "mkb-card-title" });
     titleEl.addEventListener("dblclick", () => this.editCardTitle(titleEl, card, colId));
 
-    if (card.noteLink) {
+    if (card.noteLink)
+    {
       const linkEl = cardEl.createEl("a", { text: `📄 ${card.noteLink}`, cls: "mkb-card-note-link" });
-      linkEl.addEventListener("click", (e) => { e.preventDefault(); this.app.workspace.openLinkText(card.noteLink!, "", false); });
+      linkEl.addEventListener("click", (e) =>
+        {
+          e.preventDefault();
+          this.app.workspace.openLinkText(card.noteLink!, "", false);
+        });
     }
 
     if (card.dueDate) {
       const due = new Date(card.dueDate);
       const isOverdue = due < new Date();
-      cardEl.createEl("span", { text: `📅 ${due.toLocaleDateString("fr-FR")}`, cls: `mkb-card-due ${isOverdue ? "mkb-overdue" : ""}` });
+      cardEl.createEl("span",
+        {
+          text: `📅 ${due.toLocaleDateString("fr-FR")}`, cls: `mkb-card-due ${isOverdue ? "mkb-overdue" : ""}`
+        });
     }
 
-    if (card.tags.length > 0) {
+    if (card.tags.length > 0)
+    {
       const tagsEl = cardEl.createDiv("mkb-card-tags");
-      for (const tag of card.tags) {
+      for (const tag of card.tags)
+      {
         tagsEl.createEl("span", { text: `#${tag}`, cls: "mkb-tag" });
       }
     }
@@ -154,7 +166,7 @@ export class KanbanBoard {
     setIcon(editBtn, "pencil");
     editBtn.addEventListener("click", () => this.openCardEditor(card, colId));
 
-    const archiveBtn = actions.createEl("button", { cls: "mkb-btn-icon", title: "Archiver" });
+    const archiveBtn = actions.createEl("button", { cls: "mkb-btn-icon", title: t(120) });
     setIcon(archiveBtn, "archive");
     archiveBtn.addEventListener("click", () => this.archiveCard(card, colId));
 
@@ -163,24 +175,28 @@ export class KanbanBoard {
     delBtn.addEventListener("click", () => this.deleteCard(card.id, colId));
   }
 
-  private renderArchivedSection(): void {
+  private renderArchivedSection(): void
+  {
     const allArchived: { card: KanbanCard; colId: string; colTitle: string }[] = [];
-    for (const col of this.board.columns) {
-      for (const card of col.cards.filter(c => c.archived)) {
+    for (const col of this.board.columns)
+    {
+      for (const card of col.cards.filter(c => c.archived))
+      {
         allArchived.push({ card, colId: col.id, colTitle: col.title });
       }
     }
 
     const section = this.container.createDiv("mkb-archive-section");
-    section.createEl("h3", { text: `🗄 Archives (${allArchived.length})`, cls: "mkb-archive-title" });
+    section.createEl("h3", { text: t(123)+` (${allArchived.length})`, cls: "mkb-archive-title" });
 
     if (allArchived.length === 0) {
-      section.createEl("p", { text: "Aucune carte archivée.", cls: "mkb-empty" });
+      section.createEl("p", { text: t(125), cls: "mkb-empty" });
       return;
     }
 
     const grid = section.createDiv("mkb-archive-grid");
-    for (const { card, colId, colTitle } of allArchived) {
+    for (const { card, colId, colTitle } of allArchived)
+    {
       const cardEl = grid.createDiv("mkb-card mkb-card-archived");
       const priority = card.priority ?? "normal";
       cardEl.style.borderLeftColor = PRIORITY_COLORS[priority];
@@ -192,7 +208,7 @@ export class KanbanBoard {
       const actions = cardEl.createDiv("mkb-card-actions");
       actions.style.display = "flex";
 
-      const restoreBtn = actions.createEl("button", { cls: "mkb-btn mkb-btn-secondary", text: "↩ Désarchiver" });
+      const restoreBtn = actions.createEl("button", { cls: "mkb-btn mkb-btn-secondary", text: t(121) });
       restoreBtn.addEventListener("click", () => this.unarchiveCard(card, colId));
 
       const delBtn = actions.createEl("button", { cls: "mkb-btn-icon mkb-danger" });
@@ -201,7 +217,7 @@ export class KanbanBoard {
     }
   }
 
-  // ─── Drag & Drop ─────────────────────────────────────────────────────────────
+  //Drag & Drop
 
   private onDrop(targetColId: string): void
   {
@@ -217,7 +233,7 @@ export class KanbanBoard {
     this.render();
   }
 
-  // ─── Board ───────────────────────────────────────────────────────────────────
+  //Board
 
   private async editBoardTitle(el: HTMLElement): Promise<void> {
     const input = document.createElement("input");
@@ -237,10 +253,11 @@ export class KanbanBoard {
     input.addEventListener("keydown", (e) => { if (e.key === "Enter") input.blur(); if (e.key === "Escape") this.render(); });
   }
 
-  // ─── Colonnes ────────────────────────────────────────────────────────────────
+  //Colonnes
 
-  private async addColumn(): Promise<void> {
-    const title = await this.promptInline("Nom de la colonne");
+  private async addColumn(): Promise<void>
+  {
+    const title = await this.promptInline(t(111));
     if (!title) return;
     this.board.columns.push({ id: this.store.generateId("col"), title, cards: [] });
     await this.persist();
@@ -252,10 +269,10 @@ export class KanbanBoard {
     const confirmed = await new Promise<boolean>(resolve =>
     {
       const m = new Modal(this.app);
-      m.contentEl.createEl("p", { text: "Supprimer cette colonne ?" });
-      m.contentEl.createEl("button", { text: "Confirmer", cls: "mod-warning" })
+      m.contentEl.createEl("p", { text: t(136) });
+      m.contentEl.createEl("button", { text: t(132), cls: "mod-warning" })
         .addEventListener("click", () => { m.close(); resolve(true); });
-      m.contentEl.createEl("button", { text: "Annuler" })
+      m.contentEl.createEl("button", { text: t(119) })
         .addEventListener("click", () => { m.close(); resolve(false); });
       m.open();
     });
@@ -276,9 +293,19 @@ export class KanbanBoard {
     input.className = "mkb-inline-input";
     el.replaceWith(input);
     input.focus();
-    const save = async () => { col.title = input.value.trim() || col.title; await this.persist(); this.render(); };
+    const save = async () =>
+      {
+        col.title = input.value.trim() || col.title; await this.persist();
+        this.render();
+      };
     input.addEventListener("blur", save);
-    input.addEventListener("keydown", (e) => { if (e.key === "Enter") input.blur(); if (e.key === "Escape") this.render(); });
+    input.addEventListener("keydown", (e) =>
+      {
+        if (e.key === "Enter")
+          input.blur();
+        if (e.key === "Escape")
+          this.render();
+        });
   }
 
   private openColumnMenu(triggerEl: HTMLElement, col: KanbanColumn): void
@@ -295,7 +322,7 @@ export class KanbanBoard {
     popup.style.top = (rect.bottom + 4) + "px";
     popup.style.left = (rect.left - 150) + "px";
 
-    const leftBtn = popup.createEl("button", { text: "← Décaler à gauche", cls: "mkb-menu-item" });
+    const leftBtn = popup.createEl("button", { text: t(137), cls: "mkb-menu-item" });
     leftBtn.addEventListener("click", (e) =>
     {
       e.stopPropagation();
@@ -308,7 +335,7 @@ export class KanbanBoard {
       }
     });
 
-    const rightBtn = popup.createEl("button", { text: "Décaler à droite →", cls: "mkb-menu-item" });
+    const rightBtn = popup.createEl("button", { text: t(138), cls: "mkb-menu-item" });
     rightBtn.addEventListener("click", (e) => {
       e.stopPropagation();
       const idx = this.board.columns.indexOf(col);
@@ -320,7 +347,7 @@ export class KanbanBoard {
       }
     });
 
-    const colorBtn = popup.createEl("button", { text: "Changer couleur", cls: "mkb-menu-item" });
+    const colorBtn = popup.createEl("button", { text: t(139), cls: "mkb-menu-item" });
     colorBtn.addEventListener("click", (e) => {
       e.stopPropagation();
       const input = document.createElement("input");
@@ -335,7 +362,7 @@ export class KanbanBoard {
       input.click();
     });
 
-    const delBtn = popup.createEl("button", { text: "Supprimer", cls: "mkb-menu-item mkb-menu-danger" });
+    const delBtn = popup.createEl("button", { text: t(122), cls: "mkb-menu-item mkb-menu-danger" });
     delBtn.addEventListener("click", (e) =>
     {
       e.stopPropagation();
@@ -354,10 +381,11 @@ export class KanbanBoard {
     }, 0);
   }
 
-  // ─── Cards ───────────────────────────────────────────────────────────────────
+  //cards
 
-  private async addCard(colId: string): Promise<void> {
-    const title = await this.promptInline("Titre de la carte");
+  private async addCard(colId: string): Promise<void>
+  {
+    const title = await this.promptInline(t(140));
     if (!title) return;
     const col = this.board.columns.find(c => c.id === colId);
     if (!col) return;
@@ -371,10 +399,10 @@ export class KanbanBoard {
     const confirmed = await new Promise<boolean>(resolve =>
     {
       const m = new Modal(this.app);
-      m.contentEl.createEl("p", { text: "Supprimer cette tache ?" });
-      m.contentEl.createEl("button", { text: "Confirmer", cls: "mod-warning" })
+      m.contentEl.createEl("p", { text: t(141) });
+      m.contentEl.createEl("button", { text: t(132), cls: "mod-warning" })
         .addEventListener("click", () => { m.close(); resolve(true); });
-      m.contentEl.createEl("button", { text: "Annuler" })
+      m.contentEl.createEl("button", { text: t(119) })
         .addEventListener("click", () => { m.close(); resolve(false); });
       m.open();
     });
@@ -389,19 +417,22 @@ export class KanbanBoard {
     }
   }
 
-  private async archiveCard(card: KanbanCard, colId: string): Promise<void> {
+  private async archiveCard(card: KanbanCard, colId: string): Promise<void>
+  {
     card.archived = true;
     await this.persist();
     this.render();
   }
 
-  private async unarchiveCard(card: KanbanCard, colId: string): Promise<void> {
+  private async unarchiveCard(card: KanbanCard, colId: string): Promise<void>
+  {
     card.archived = false;
     await this.persist();
     this.render();
   }
 
-  private async editCardTitle(el: HTMLElement, card: KanbanCard, colId: string): Promise<void> {
+  private async editCardTitle(el: HTMLElement, card: KanbanCard, colId: string): Promise<void>
+  {
     const input = document.createElement("input");
     input.type = "text";
     input.value = card.title;
@@ -413,10 +444,11 @@ export class KanbanBoard {
     input.addEventListener("keydown", (e) => { if (e.key === "Enter") input.blur(); if (e.key === "Escape") this.render(); });
   }
 
-  private openCardEditor(card: KanbanCard, colId: string): void {
+  private openCardEditor(card: KanbanCard, colId: string): void
+  {
     const overlay = this.container.createDiv("mkb-editor-overlay");
     const modal = overlay.createDiv("mkb-editor-modal");
-    modal.createEl("h3", { text: "Éditer la carte" });
+    modal.createEl("h3", { text: t(112) });
 
     const field = (label: string, value: string, onchange: (v: string) => void) => {
       const row = modal.createDiv("mkb-editor-row");
@@ -426,14 +458,14 @@ export class KanbanBoard {
       return input;
     };
 
-    field("Titre", card.title, (v) => (card.title = v));
-    field("Lien note", card.noteLink ?? "", (v) => (card.noteLink = v || undefined));
-    field("Due date (YYYY-MM-DD)", card.dueDate ?? "", (v) => (card.dueDate = v || undefined));
-    field("Tags (virgule)", card.tags.join(", "), (v) => { card.tags = v.split(",").map(t => t.trim()).filter(Boolean); });
+    field(t(113), card.title, (v) => (card.title = v));
+    field(t(114), card.noteLink ?? "", (v) => (card.noteLink = v || undefined));
+    field(t(115), card.dueDate ?? "", (v) => (card.dueDate = v || undefined));
+    field(t(116), card.tags.join(", "), (v) => { card.tags = v.split(",").map(t => t.trim()).filter(Boolean); });
 
     // Sélecteur priorité
     const priorityRow = modal.createDiv("mkb-editor-row");
-    priorityRow.createEl("label", { text: "Priorité" });
+    priorityRow.createEl("label", { text: t(117) });
     const select = priorityRow.createEl("select", { cls: "mkb-select" });
     for (const p of PRIORITY_ORDER) {
       const opt = select.createEl("option", { text: PRIORITY_LABELS[p], value: p });
@@ -442,14 +474,14 @@ export class KanbanBoard {
     select.addEventListener("change", () => { card.priority = select.value as Priority; });
 
     const btns = modal.createDiv("mkb-editor-btns");
-    const saveBtn = btns.createEl("button", { text: "Enregistrer", cls: "mkb-btn mkb-btn-primary" });
+    const saveBtn = btns.createEl("button", { text: t(118), cls: "mkb-btn mkb-btn-primary" });
     saveBtn.addEventListener("click", async () => { await this.persist(); overlay.remove(); this.render(); });
-    const cancelBtn = btns.createEl("button", { text: "Annuler", cls: "mkb-btn mkb-btn-secondary" });
+    const cancelBtn = btns.createEl("button", { text: t(119), cls: "mkb-btn mkb-btn-secondary" });
     cancelBtn.addEventListener("click", () => { overlay.remove(); this.render(); });
     overlay.addEventListener("click", (e) => { if (e.target === overlay) { overlay.remove(); this.render(); } });
   }
 
-  // ─── Utils ───────────────────────────────────────────────────────────────────
+  //Utils
 
   private async persist(): Promise<void>
   {

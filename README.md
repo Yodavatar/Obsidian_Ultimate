@@ -47,12 +47,11 @@ Kanban is a methode of organisation for a to do list.
 - Multiple columns (move left/right, change color, delete)
 - Create tasks (multiple priorities, due dates, links, tags, delete)
 - Archiving features for notes
-- Sort tasks 
-
+- Sort tasks
 
 ## Installation
 
-To install Obsidian_Ultimate, you can:
+To install Obsidian Ultimate, you can:
 
 1. **Clone the repository**:
 
@@ -61,15 +60,12 @@ To install Obsidian_Ultimate, you can:
    ```
    
 2. **Get to zip**:
-
-   
-   You can get the link to the zip [here](https://github.com/Yodavatar/Obsidian_Ultimate/archive/refs/heads/main.zip).
-   <br>
+   You can get the link to the zip [here](https://github.com/Yodavatar/Obsidian_Ultimate/archive/refs/heads/main.zip).<br>
 
 ## Usage
 
 To use Obsidian Ultimate you need to have last obsidian's version.<br>
-You can install Obsidian on [here](https://obsidian.md/download)<br><br>
+You can install Obsidian on [here](https://obsidian.md/download).<br><br>
 
 <img width="470" height="270" alt="image" src="https://github.com/user-attachments/assets/ab6c8a58-fc32-497b-b1cc-6db0a27104a4" /><br>
 
@@ -78,7 +74,8 @@ Then you need to activate community plugins.<br>
 
 
 
-Put the project in the folder "plugins".<br>
+Place the project in the "plugins" folder<br>
+of the Obsidian Vault you want to test.<br> 
 
 <img width="269" height="192" alt="image" src="https://github.com/user-attachments/assets/c50001d9-57a3-470f-9529-a86e2396ed9a" />
 

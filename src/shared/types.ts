@@ -1,32 +1,33 @@
-import type Obsidian_Ultimate from "../main";
+import type { Language } from "../core/i18n";
 
 /**
- * Interface que chaque module doit implémenter.
- * Le core appelle ces méthodes au bon moment.
+ * Interface that each module must implement.
+ * The core calls these methods at the right time.
  */
-export interface IModule {
-  /** Identifiant unique du module (ex: "kanban", "theme") */
+
+export interface IModule
+{
   id: string;
-  /** Nom affiché dans les settings */
   name: string;
-  /** Appelé quand le module est activé */
   onload(): Promise<void> | void;
-  /** Appelé quand le module est désactivé ou le plugin déchargé */
   onunload(): void;
 }
 
 /**
- * Settings globaux du plugin.
- * Chaque module a sa propre clé pour ses settings.
+ * Global settings of the plugin.
+ * Each module has its own key for its settings.
  */
-export interface Obsidian_Ultimate_Settings {
-  /** Map module_id → activé ou non */
+
+export interface Obsidian_Ultimate_Settings
+{
   enabledModules: Record<string, boolean>;
-  /** Settings spécifiques à chaque module (clé = module id) */
   moduleSettings: Record<string, unknown>;
+  language: Language;
 }
 
-export const DEFAULT_SETTINGS: Obsidian_Ultimate_Settings = {
+export const DEFAULT_SETTINGS: Obsidian_Ultimate_Settings =
+{
   enabledModules: {},
   moduleSettings: {},
+  language: "en",
 };

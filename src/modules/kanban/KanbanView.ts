@@ -1,6 +1,7 @@
 import { ItemView, WorkspaceLeaf, setIcon } from "obsidian";
 import type { KanbanStore, KanbanBoardData } from "./KanbanStore";
 import { KanbanBoard } from "./KanbanBoard";
+import { t } from "../../core/i18n";
 
 export const KANBAN_VIEW_TYPE = "obsidian_ultimate-kanban";
 
@@ -20,10 +21,12 @@ export class KanbanView extends ItemView
   {
     return KANBAN_VIEW_TYPE;
   }
+
   getDisplayText()
   {
-    return this.currentBoard?.title ?? "Kanban";
+    return this.currentBoard?.title ?? t(100);
   }
+
   getIcon()
   {
     return "kanban";
@@ -37,26 +40,26 @@ export class KanbanView extends ItemView
 
   async onClose(): Promise<void>{}
 
-  // ─── Sélecteur de boards ─────────────────────────────────────────────────────
-
-  private async renderBoardSelector(): Promise<void> {
+  //Select Board
+  public async renderBoardSelector(): Promise<void>
+  {
     const root = this.containerEl.children[1] as HTMLElement;
     root.empty();
     root.addClass("mkb-view-root");
 
     const boards = await this.store.listBoards();
 
-    // S'il existe déjà des boards, en ouvrir le premier par défaut
+    //Open the first board
     if (boards.length === 0)
     {
       const empty = root.createDiv("mkb-selector-empty");
-      empty.createEl("p", { text: "Aucun board. Crée-en un !" });
-      const btn = empty.createEl("button", { text: "+ Nouveau board", cls: "mkb-btn mkb-btn-primary" });
+      empty.createEl("p", { text: t(105) });
+      const btn = empty.createEl("button", { text: t(106), cls: "mkb-btn mkb-btn-primary" });
       btn.addEventListener("click", () => this.createBoard(root));
       return;
     }
 
-    // Barre de sélection
+    //Select bar
     const bar = root.createDiv("mkb-selector-bar");
     const select = bar.createEl("select", { cls: "mkb-select" });
     for (const b of boards)
@@ -71,10 +74,10 @@ export class KanbanView extends ItemView
       if (board) this.openBoard(board, root);
     });
 
-    const newBtn = bar.createEl("button", { cls: "mkb-btn mkb-btn-secondary", text: "+ Nouveau" });
+    const newBtn = bar.createEl("button", { cls: "mkb-btn mkb-btn-secondary", text: t(106) });
     newBtn.addEventListener("click", () => this.createBoard(root));
 
-    const delBtn = bar.createEl("button", { cls: "mkb-btn-icon mkb-danger", title: "Supprimer ce board" });
+    const delBtn = bar.createEl("button", { cls: "mkb-btn-icon mkb-danger", title: t(104) });
     setIcon(delBtn, "trash");
     delBtn.addEventListener("click", async () =>
     {
@@ -83,10 +86,10 @@ export class KanbanView extends ItemView
       await this.renderBoardSelector();
     });
 
-    // Zone du board
+    //Board Area
     const boardContainer = root.createDiv("mkb-board-container");
 
-    // Ouvrir le board sélectionné (ou le premier par défaut)
+    //Open the board select (or the first by default)
     const toOpen = this.currentBoard
       ? (await this.store.loadBoard(this.currentBoard.id)) ?? boards[0]
       : boards[0];
@@ -103,7 +106,7 @@ export class KanbanView extends ItemView
     this.currentBoard = board;
     this.app.workspace.requestSaveLayout();
 
-    // Remplacer la zone board
+    //replace the area board
     let boardContainer = existingContainer ?? root.querySelector(".mkb-board-container") as HTMLElement;
     if (!boardContainer)
     {
@@ -131,8 +134,8 @@ export class KanbanView extends ItemView
     {
       const overlay = (this.containerEl.children[1] as HTMLElement).createDiv("mkb-editor-overlay");
       const box = overlay.createDiv("mkb-prompt-box");
-      box.createEl("p", { text: "Nom du nouveau board" });
-      const input = box.createEl("input", { type: "text", placeholder: "Mon board" });
+      box.createEl("p", { text: t(107) });
+      const input = box.createEl("input", { type: "text", placeholder: t(113) });
       input.className = "mkb-inline-input";
       input.focus();
       const confirm = () => { overlay.remove(); resolve(input.value.trim() || null); };
@@ -145,7 +148,6 @@ export class KanbanView extends ItemView
     this.currentBoard = board;
     await this.renderBoardSelector();
   }
-
 
 //Styles
 

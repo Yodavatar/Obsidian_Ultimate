@@ -1,11 +1,10 @@
 {
-  "id": "Obsidian_Ultimate",
-  "name": "Obsidian_Ultimate",
+  "id": "Obsidian-Ultimate",
+  "name": "Obsidian Ultimate",
   "version": "0.1.0",
   "minAppVersion": "1.0.0",
   "description": "All-in-one modular plugin for Obsidian.",
   "author": "Yodavatar",
-  "authorUrl": "",
-  "fundingUrl": "",
+  "authorUrl": "https://github.com/Yodavatar",
   "isDesktopOnly": false
 }

@@ -1,23 +1,15 @@
 import { App, normalizePath, Modal} from "obsidian";
+import { t } from "../../core/i18n";
+import type { TaskStore, Task, Priority } from "../../shared/taskstore";
 
-export type Priority = "urgent" | "high" | "normal" | "low";
+export type {Priority};
 
-export interface KanbanCard {
-  id: string;
-  title: string;
-  noteLink?: string;
-  dueDate?: string;
-  tags: string[];
-  description?: string;
-  priority: Priority;
-  archived: boolean;
-}
+export type KanbanCard = Task;
 
 export interface KanbanColumn {
   id: string;
   title: string;
   color?: string;
-  cards: KanbanCard[];
 }
 
 export interface KanbanBoardData {
@@ -30,9 +22,26 @@ export interface KanbanBoardData {
 
 const DATA_DIR = normalizePath(".obsidian_ultimate/kanban");
 
+export const PRIORITY_ORDER: Priority[] = ["urgent", "high", "normal", "low"];
+
+export const PRIORITY_LABELS: Record<Priority, string> = {
+  urgent: "🔴 " + t(142),
+  high:   "🟠 " + t(143),
+  normal: "🟢 " + t(144),
+  low:    "🫙 " + t(145),
+};
+
+export const PRIORITY_COLORS: Record<Priority, string> = {
+  urgent: "#e55",
+  high:   "#e96f00",
+  normal: "#3a3",
+  low:    "#888",
+};
+
 export class KanbanStore
 {
   private app: App;
+  private taskStore: TaskStore;
 
   constructor(app: App)
   {
@@ -47,27 +56,34 @@ export class KanbanStore
   async ensureDataDir(): Promise<void>
   {
     if (!(await this.app.vault.adapter.exists(DATA_DIR)))
-    {
+      {
       await this.app.vault.adapter.mkdir(DATA_DIR);
     }
   }
+
+  //boards
 
   async loadBoard(boardId: string): Promise<KanbanBoardData | null>
   {
     const path = this.boardPath(boardId);
     if (!(await this.app.vault.adapter.exists(path))) return null;
     const raw = await this.app.vault.adapter.read(path);
-    return JSON.parse(raw) as KanbanBoardData;
+    return JSON.parse(raw) as KanbanBoardData; 
   }
 
   async saveBoard(board: KanbanBoardData): Promise<void>
   {
     await this.ensureDataDir();
     board.updatedAt = new Date().toISOString();
-    await this.app.vault.adapter.write
-    (
+    // On s'assure qu'aucune carte ne se retrouve serialisée dans le JSON board
+    const toWrite: KanbanBoardData =
+    {
+      ...board,
+      columns: board.columns.map(({ id, title, color }) => ({ id, title, color })),
+    };
+    await this.app.vault.adapter.write(
       this.boardPath(board.id),
-      JSON.stringify(board, null, 2)
+      JSON.stringify(toWrite, null, 2),
     );
   }
 
@@ -79,32 +95,42 @@ export class KanbanStore
     for (const f of files.files.filter((f) => f.endsWith(".json")))
     {
       const raw = await this.app.vault.adapter.read(f);
-      try { boards.push(JSON.parse(raw)); } catch {}
+      try
+      {
+        const data = JSON.parse(raw) as KanbanBoardData;
+        for (const col of data.columns) delete (col as any).cards;
+        boards.push(data);
+      }
+      catch
+      {}
     }
     return boards.sort((a, b) => a.title.localeCompare(b.title));
   }
 
   async deleteBoard(boardId: string): Promise<void>
   {
-    const confirmed = await new Promise<boolean>(resolve =>
+    const confirmed = await new Promise<boolean>((resolve) =>
     {
       const m = new Modal(this.app);
-      m.contentEl.createEl("p", { text: "Supprimer ce board ?" });
-      m.contentEl.createEl("button", { text: "Confirmer", cls: "mod-warning" })
+      m.contentEl.createEl("p", { text: t(131) });
+      m.contentEl
+        .createEl("button", { text: t(132), cls: "mod-warning" })
         .addEventListener("click", () => { m.close(); resolve(true); });
-      m.contentEl.createEl("button", { text: "Annuler" })
+      m.contentEl
+        .createEl("button", { text: t(119) })
         .addEventListener("click", () => { m.close(); resolve(false); });
       m.open();
     });
 
     if (!confirmed) return;
-    else
+
+    //del all tasks of a board
+    await this.taskStore.deleteTasksByBoard(boardId);
+
+    const path = this.boardPath(boardId);
+    if (await this.app.vault.adapter.exists(path))
     {
-      const path = this.boardPath(boardId);
-      if (await this.app.vault.adapter.exists(path))
-      {
-        await this.app.vault.adapter.remove(path);
-      }
+      await this.app.vault.adapter.remove(path);
     }
   }
 
@@ -112,15 +138,15 @@ export class KanbanStore
   {
     const now = new Date().toISOString();
     const ts = Date.now();
-    return {
+    return{
       id: `board-${ts}`,
       title,
       createdAt: now,
       updatedAt: now,
       columns: [
-        { id: `col-${ts}-1`, title: "À faire",  color: "#6c8ebf", cards: [] },
-        { id: `col-${ts}-2`, title: "En cours", color: "#d6a94a", cards: [] },
-        { id: `col-${ts}-3`, title: "Terminé",  color: "#5a9e6f", cards: [] },
+        { id: `col-${ts}-1`, title: t(134), color: "#6c8ebf" },
+        { id: `col-${ts}-2`, title: t(133), color: "#d6a94a" },
+        { id: `col-${ts}-3`, title: t(135), color: "#5a9e6f" },
       ],
     };
   }
@@ -129,20 +155,71 @@ export class KanbanStore
   {
     return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
   }
-}
 
-export const PRIORITY_ORDER: Priority[] = ["urgent", "high", "normal", "low"];
-export const PRIORITY_LABELS: Record<Priority, string> =
-{
-  urgent: "🔴 Urgent",
-  high:   "🟠 Haute",
-  normal: "🟢 Normale",
-  low:    "🫙 Basse",
-};
-export const PRIORITY_COLORS: Record<Priority, string> =
-{
-  urgent: "#e55",
-  high:   "#e96f00",
-  normal: "#3a3",
-  low:    "#888",
-};
+
+  //return the tasks not harchived in a column
+  getCards(boardId: string, columnId: string): KanbanCard[]
+  {
+    return this.taskStore.getTasks({ source: "kanban", boardId, columnId, archived: false });
+  }
+
+  //return the harchived tasks in all the board
+  getArchivedCards(boardId: string): KanbanCard[]
+  {
+    return this.taskStore.getTasks({ source: "kanban", boardId, archived: true });
+  }
+
+  async addCard(
+    boardId: string,
+    columnId: string,
+    title: string,
+  ): Promise<KanbanCard> {
+    return this.taskStore.addTask({
+      id: this.taskStore.generateId("card"),
+      source: "kanban",
+      boardId,
+      columnId,
+      title,
+      done: false,
+      archived: false,
+      priority: "normal",
+      tags: [],
+    });
+  }
+
+  async updateCard(
+    cardId: string,
+    changes: Partial<Omit<Task, "id" | "createdAt">>,
+  ): Promise<KanbanCard | null>
+  {
+    return this.taskStore.updateTask(cardId, changes);
+  }
+
+  async deleteCard(cardId: string): Promise<boolean>
+  {
+    return this.taskStore.deleteTask(cardId);
+  }
+
+  async archiveCard(cardId: string): Promise<KanbanCard | null>
+  {
+    return this.taskStore.updateTask(cardId, { archived: true });
+  }
+
+  async unarchiveCard(cardId: string): Promise<KanbanCard | null>
+  {
+    return this.taskStore.updateTask(cardId, { archived: false });
+  }
+
+  //move a task to a another colomn
+  async moveCard(cardId: string, targetColumnId: string): Promise<KanbanCard | null>
+  {
+    return this.taskStore.updateTask(cardId, { columnId: targetColumnId });
+  }
+
+  //delete all tasks of a colomn
+  async deleteCardsByColumn(boardId: string, columnId: string): Promise<void>
+  {
+    const tasks = this.taskStore.getTasks({ source: "kanban", boardId, columnId });
+    for (const t of tasks) await this.taskStore.deleteTask(t.id);
+  }
+}

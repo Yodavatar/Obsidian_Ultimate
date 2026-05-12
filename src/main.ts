@@ -2,6 +2,7 @@
 import { Plugin } from "obsidian";
 import { ModuleRegistry } from "./core/ModuleRegistry";
 import { Obsidian_Ultimate_Settings_Tab } from "./core/SettingsTab";
+import { setLanguage } from "./core/i18n";
 import { DEFAULT_SETTINGS, type Obsidian_Ultimate_Settings } from "./shared/types";
 
 //All modules one in all
@@ -16,6 +17,7 @@ export default class Obsidian_Ultimate extends Plugin
   async onload() {
     console.log("[Obsidian Ultimate] Chargement...");
     await this.loadSettings();
+    setLanguage(this.settings.language);
     this.registry = new ModuleRegistry();
 
     //All modules one in all

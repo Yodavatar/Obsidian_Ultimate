@@ -1,15 +1,18 @@
 import { ItemView, WorkspaceLeaf, FileSystemAdapter } from "obsidian";
 import type { DashboardSettings } from "./DashboardSettings";
 import type { DashboardModule } from "./DashboardModule";
+import { t, onLanguageChange } from "../../core/i18n";
 
 export const DASHBOARD_VIEW_TYPE = "obsidian_ultimate-dashboard";
 
-export class DashboardView extends ItemView {
+export class DashboardView extends ItemView
+{
   private module: DashboardModule;
   private clockInterval: number | null = null;
   private searchTimeout: number | null = null;
 
-  constructor(leaf: WorkspaceLeaf, module: DashboardModule) {
+  constructor(leaf: WorkspaceLeaf, module: DashboardModule)
+  {
     super(leaf);
     this.module = module;
   }
@@ -20,9 +23,11 @@ export class DashboardView extends ItemView {
 
   get s(): DashboardSettings { return this.module.getDashboardSettings(); }
 
-  async onOpen(): Promise<void> {
-    // Garantir un seul dashboard ouvert à la fois
-    this.app.workspace.getLeavesOfType(DASHBOARD_VIEW_TYPE).forEach(leaf => {
+  async onOpen(): Promise<void>
+  {
+    //make sure that one dashboard opens at a time
+    this.app.workspace.getLeavesOfType(DASHBOARD_VIEW_TYPE).forEach(leaf =>
+    {
       if (leaf !== this.leaf) leaf.detach();
     });
 
@@ -55,10 +60,11 @@ export class DashboardView extends ItemView {
     this.renderSearch(center);
   }
 
-  // ── Wallpaper ──────────────────────────────────────────────────────────────
-  // On utilise FileSystemAdapter.getResourcePath() car les fichiers stockés dans
-  // des dossiers cachés (ex. .Obsidian_Ultimate/) ne sont pas indexés en TFile.
-  private applyWallpaper(root: HTMLElement): void {
+  //Wallpaper
+  // We use FileSystemAdapter.getResourcePath() because the files stored in
+  // hidden folders (e.g..Obsidian_Ultimate/) are not indexed in TFile.
+  private applyWallpaper(root: HTMLElement): void
+  {
     if (!this.s.wallpaperPath) return;
     const adapter = this.app.vault.adapter;
     if (!(adapter instanceof FileSystemAdapter)) return;
@@ -68,14 +74,15 @@ export class DashboardView extends ItemView {
     root.style.backgroundPosition = "center";
   }
 
-  // ── Horloge ────────────────────────────────────────────────────────────────
-  private renderClock(parent: HTMLElement): void {
+  //Clock
+  private renderClock(parent: HTMLElement): void
+  {
     const wrap = parent.createDiv("dash-clock");
     const time = wrap.createDiv("dash-time");
     const date = wrap.createDiv("dash-date");
 
-    const DAYS   = ["Dimanche","Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi"];
-    const MONTHS = ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
+    const DAYS   = [t(256),t(250),t(251),t(252),t(253),t(254),t(255)];
+    const MONTHS = [t(257),t(258),t(259),t(260),t(261),t(262),t(263),t(264),t(265),t(266),t(267),t(268)];
 
     const tick = () => {
       const now = new Date();
@@ -89,63 +96,68 @@ export class DashboardView extends ItemView {
     this.clockInterval = window.setInterval(tick, 1000);
   }
 
-  // ── Recherche ──────────────────────────────────────────────────────────────
-  // Les fichiers s'ouvrent dans le même leaf que le dashboard (this.leaf).
+  //Research
+  //The files open in the same leaf as the dashboard (this.leaf).
   private renderSearch(parent: HTMLElement): void {
     const wrap = parent.createDiv("dash-search-wrap");
     const input = wrap.createEl("input", {
       type: "text",
-      placeholder: "🔍  Rechercher dans le vault…",
+      placeholder: t(202),
       cls: "dash-search",
     });
     const results = wrap.createDiv("dash-results");
 
-    input.addEventListener("input", () => {
-      if (this.searchTimeout) window.clearTimeout(this.searchTimeout);
-      this.searchTimeout = window.setTimeout(() => {
-        results.empty();
-        const q = input.value.trim().toLowerCase();
-        if (!q) { results.style.display = "none"; return; }
+    input.addEventListener("input", () =>
+      {
+        if (this.searchTimeout) window.clearTimeout(this.searchTimeout);
+        this.searchTimeout = window.setTimeout(() =>
+          {
+            results.empty();
+            const q = input.value.trim().toLowerCase();
+            if (!q) { results.style.display = "none"; return; }
 
-        const files = this.app.vault
-          .getMarkdownFiles()
-          .filter(f => f.basename.toLowerCase().includes(q))
-          .slice(0, 8);
+            const files = this.app.vault
+              .getMarkdownFiles()
+              .filter(f => f.basename.toLowerCase().includes(q))
+              .slice(0, 8);
 
-        results.style.display = "block";
+            results.style.display = "block";
 
-        if (files.length === 0) {
-          results.createDiv({ text: "Aucun résultat", cls: "dash-result-empty" });
-          return;
-        }
+            if (files.length === 0) {
+              results.createDiv({ text:t(203), cls: "dash-result-empty" });
+              return;
+            }
 
-        for (const f of files) {
-          const item = results.createDiv("dash-result-item");
-          item.createSpan({ text: f.basename, cls: "dash-result-name" });
-          item.createSpan({ text: f.parent?.path ?? "/", cls: "dash-result-path" });
+            for (const f of files) {
+              const item = results.createDiv("dash-result-item");
+              item.createSpan({ text: f.basename, cls: "dash-result-name" });
+              item.createSpan({ text: f.parent?.path ?? "/", cls: "dash-result-path" });
 
-          // Ouvre le fichier dans le leaf du dashboard (remplace la vue)
-          item.addEventListener("click", () => {
-            this.leaf.openFile(f);
-            results.style.display = "none";
-            input.value = "";
-          });
-        }
-      }, 150);
-    });
+              //Opens the file in the dashboard leaf (replaces the view)
+              item.addEventListener("click", () =>
+              {
+                this.leaf.openFile(f);
+                results.style.display = "none";
+                input.value = "";
+              });
+            }
+        }, 150);
+      });
 
-    input.addEventListener("keydown", e => {
+    input.addEventListener("keydown", e =>
+    {
       if (e.key === "Escape") { input.value = ""; results.style.display = "none"; }
     });
 
-    document.addEventListener("click", e => {
+    document.addEventListener("click", e =>
+    {
       if (!wrap.contains(e.target as Node)) results.style.display = "none";
     });
 
     results.style.display = "none";
   }
 
-  // ── Paramètres ─────────────────────────────────────────────────────────────
+  //Settings
   private openSettings(): void {
     const root = this.containerEl.children[1] as HTMLElement;
     const existing = root.querySelector(".dash-overlay-modal");
@@ -153,22 +165,22 @@ export class DashboardView extends ItemView {
 
     const overlay = this.makeOverlay();
     const panel = overlay.createDiv("dash-modal dash-settings");
-    panel.createEl("h3", { text: "⚙️ Paramètres du Dashboard" });
+    panel.createEl("h3", { text: t(205) });
 
-    this.settingToggle(panel, "Afficher l'horloge", "showClock");
-    this.settingToggle(panel, "Afficher les secondes", "showSeconds");
-    this.settingToggle(panel, "Ouvrir au démarrage", "openOnStartup");
+    this.settingToggle(panel, t(206), "showClock");
+    this.settingToggle(panel, t(207), "showSeconds");
+    this.settingToggle(panel, t(209), "openOnStartup");
 
     // Fond d'écran
     const wr = panel.createDiv("dash-setting-row");
-    wr.createSpan({ text: "Fond d'écran", cls: "dash-setting-label" });
+    wr.createSpan({ text: t(210), cls: "dash-setting-label" });
     const wpRight = wr.createDiv("dash-setting-right");
     const wpName = wpRight.createSpan({
       text: this.s.wallpaperPath ? this.s.wallpaperPath.split("/").pop()! : "Aucun",
       cls: "dash-setting-val",
     });
 
-    const wpBtn = wpRight.createEl("button", { text: "Choisir…", cls: "dash-btn" });
+    const wpBtn = wpRight.createEl("button", { text: t(211), cls: "dash-btn" });
     wpBtn.addEventListener("click", () => {
       const fileInput = document.createElement("input");
       fileInput.type = "file";
@@ -192,7 +204,7 @@ export class DashboardView extends ItemView {
       fileInput.click();
     });
 
-    const clearBtn = wpRight.createEl("button", { text: "✕", cls: "dash-btn", title: "Supprimer le fond" });
+    const clearBtn = wpRight.createEl("button", { text: "✕", cls: "dash-btn", title: t(212) });
     clearBtn.addEventListener("click", async () => {
       this.s.wallpaperPath = "";
       wpName.textContent = "Aucun";
@@ -200,9 +212,9 @@ export class DashboardView extends ItemView {
       (this.containerEl.children[1] as HTMLElement).style.backgroundImage = "";
     });
 
-    // Opacité de l'overlay
+    // Opacity of the overlay
     const or = panel.createDiv("dash-setting-row");
-    or.createSpan({ text: "Opacité overlay", cls: "dash-setting-label" });
+    or.createSpan({ text: t(213), cls: "dash-setting-label" });
     const orRight = or.createDiv("dash-setting-right");
     const opInput = orRight.createEl("input", { type: "range", value: String(this.s.wallpaperOpacity) });
     opInput.min = "0"; opInput.max = "1"; opInput.step = "0.05";
@@ -213,11 +225,12 @@ export class DashboardView extends ItemView {
       await this.module.saveDashboardSettings();
     });
 
-    panel.createEl("button", { text: "Fermer", cls: "dash-btn dash-btn-primary" })
+    panel.createEl("button", { text: t(214), cls: "dash-btn dash-btn-primary" })
       .addEventListener("click", () => { overlay.remove(); this.render(); });
   }
 
-  private settingToggle(parent: HTMLElement, label: string, key: keyof DashboardSettings): void {
+  private settingToggle(parent: HTMLElement, label: string, key: keyof DashboardSettings): void
+  {
     const row = parent.createDiv("dash-setting-row");
     row.createSpan({ text: label, cls: "dash-setting-label" });
     const toggle = row.createEl("input", { type: "checkbox" });
@@ -232,13 +245,18 @@ export class DashboardView extends ItemView {
     const root = this.containerEl.children[1] as HTMLElement;
     const overlay = root.createDiv("dash-overlay-modal");
     overlay.addEventListener("click", e => {
-      if (e.target === overlay) { overlay.remove(); this.render(); }
+      if (e.target === overlay)
+      {
+        overlay.remove();
+        this.render();
+      }
     });
     return overlay;
   }
 
   // ── Styles ─────────────────────────────────────────────────────────────────
-  private injectStyles(): void {
+  private injectStyles(): void
+  {
     const id = "obsidian_ultimate_dashboard_styles";
     if (document.getElementById(id)) return;
     const s = document.createElement("style");

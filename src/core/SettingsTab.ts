@@ -1,4 +1,5 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
+import { t, setLanguage, type Language } from "./i18n";
 import type Obsidian_Ultimate from "../main";
 
 export class Obsidian_Ultimate_Settings_Tab extends PluginSettingTab
@@ -16,19 +17,68 @@ export class Obsidian_Ultimate_Settings_Tab extends PluginSettingTab
     const { containerEl } = this;
     containerEl.empty();
 
-    containerEl.createEl("h2", { text: "Obsidian Ultimate" });
+    containerEl.createEl("h2", { text: t(1) });
     containerEl.createEl("p", {
-      text: "Active ou désactive les modules ci-dessous. Les changements sont immédiats.",
+      text: t(2),
       cls: "setting-item-description",
     });
 
-    containerEl.createEl("h3", { text: "Modules" });
+
+    //traduction section
+    containerEl.createEl("h3", { text: t(13) });
+
+    new Setting(containerEl)
+      .setName(t(14))
+      .addDropdown(drop =>
+      {
+        drop
+          .addOption("en", "English")
+          .addOption("fr", "Français")
+          .setValue(this.plugin.settings.language)
+          .onChange(async (value) =>
+          {
+            this.plugin.settings.language = value as Language;
+            await this.plugin.saveSettings();
+            setLanguage(value as Language);
+            this.display();
+          });
+      });
+
+    //community section
+    containerEl.createEl("hr");
+    containerEl.createEl("h3", { text: t(3) });
+
+    new Setting(containerEl)
+      .setName(t(4))
+      .setDesc(t(5))
+      .addButton(btn => btn
+        .setButtonText(t(6))
+        .setCta()
+        .onClick(() => {
+          window.open("https://github.com/yodavatar/Obsidian_Ultimate/discussions", "_blank");
+        })
+      );
+
+    new Setting(containerEl)
+      .setName(t(7))
+      .setDesc(t(8))
+      .addButton(btn => btn
+        .setButtonText(t(9))
+        .onClick(() => {
+          window.open("https://github.com/yodavatar/Obsidian_Ultimate/projects", "_blank");
+        })
+      );
+
+
+
+    //Show the modules available
+    containerEl.createEl("h3", { text: t(10) });
 
     const modules = this.plugin.registry.getAll();
 
     if (modules.length === 0)
     {
-      containerEl.createEl("p", { text: "Aucun module disponible." });
+      containerEl.createEl("p", { text: t(11) });
       return;
     }
 

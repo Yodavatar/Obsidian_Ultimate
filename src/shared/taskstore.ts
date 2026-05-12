@@ -1,48 +1,51 @@
 import { App, normalizePath } from "obsidian";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+//types
 
 export type Priority = "urgent" | "high" | "normal" | "low";
 export type TaskSource = "kanban" | "todo" | "calendar" | string;
 
-export interface Task {
+export interface Task
+{
   id:          string;
   title:       string;
   done:        boolean;
   archived:    boolean;
   priority:    Priority;
   tags:        string[];
-  dueDate?:    string;       // ISO date string "YYYY-MM-DD"
-  noteLink?:   string;       // [[Note]] wikilink
+  dueDate?:    string;//ISO date string "YYYY-MM-DD"
+  noteLink?:   string;//
   description?: string;
 
-  // Contexte source — chaque module remplit ce qui le concerne
-  source:      TaskSource;
-  boardId?:    string;       // Kanban
-  columnId?:   string;       // Kanban
+  //Contexte source — each module fill out his informations
 
-  createdAt:   string;       // ISO datetime
-  updatedAt:   string;       // ISO datetime
+  source:      TaskSource;
+  boardId?:    string;//Kanban
+  columnId?:   string;//Kanban
+
+  createdAt:   string;//ISO datetime
+  updatedAt:   string;// ISO datetime
 }
 
-export interface TaskFilter {
+export interface TaskFilter
+{
   source?:   TaskSource;
   boardId?:  string;
   columnId?: string;
   done?:     boolean;
   archived?: boolean;
-  dueDate?:  string;         // filtre exact sur la date
+  dueDate?:  string;//exact filter on the date
   tag?:      string;
 }
 
 type ChangeEvent = "add" | "update" | "delete";
 type ChangeListener = (event: ChangeEvent, task: Task) => void;
 
-// ─── Constantes ───────────────────────────────────────────────────────────────
+//Constants
 
 const DATA_PATH = normalizePath(".obsidian_ultimate/tasks.json");
 
-// ─── TaskStore ────────────────────────────────────────────────────────────────
+//TaskStore
 
 export class TaskStore
 {
@@ -56,7 +59,7 @@ export class TaskStore
     this.app = app;
   }
 
-  // ── Initialisation ──────────────────────────────────────────────────────────
+  //Init
 
   async load(): Promise<void>
   {
@@ -71,7 +74,7 @@ export class TaskStore
         const arr: Task[] = JSON.parse(raw);
         for (const t of arr) this.tasks.set(t.id, t);
       }
-      catch (e) { console.error("[TaskStore] Erreur de parsing tasks.json", e); }
+      catch (e) { console.error("[TaskStore] error pars of tasks.json", e); }
     }
 
     this.loaded = true;
@@ -87,11 +90,11 @@ export class TaskStore
     await this.app.vault.adapter.write(DATA_PATH, JSON.stringify(arr, null, 2));
   }
 
-  // ── API de lecture ──────────────────────────────────────────────────────────
+  //read API
 
   /**
-   * Retourne les tasks filtrées.
-   * Tous les critères sont combinés en AND.
+   * return the filter tasks.
+   * All criteria are combine with AND.
    */
   getTasks(filter: TaskFilter = {}): Task[]
   {
@@ -113,7 +116,7 @@ export class TaskStore
     return this.tasks.get(id);
   }
 
-  // ── API d'écriture ──────────────────────────────────────────────────────────
+  //Write API
 
   async addTask(task: Omit<Task, "createdAt" | "updatedAt">): Promise<Task>
   {
@@ -147,7 +150,7 @@ export class TaskStore
     return true;
   }
 
-  /** Supprime toutes les tasks liées à un board (nettoyage à la suppression d'un board). */
+  //del all tasks link to a board
   async deleteTasksByBoard(boardId: string): Promise<void>
   {
     const toDelete = this.getTasks({ boardId });
@@ -155,20 +158,23 @@ export class TaskStore
     if (toDelete.length > 0) await this.persist();
   }
 
-  // ── Helpers ─────────────────────────────────────────────────────────────────
+  //helpers
 
   generateId(prefix: string): string
   {
     return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
   }
 
-  // ── Événements ──────────────────────────────────────────────────────────────
+  //event
 
   on(listener: ChangeListener): () => void
   {
     this.listeners.push(listener);
-    // Retourne un unsubscribe
-    return () => { this.listeners = this.listeners.filter(l => l !== listener); };
+    //return a unsubscribe
+    return () =>
+    {
+        this.listeners = this.listeners.filter(l => l !== listener);
+    };
   }
 
   private emit(event: ChangeEvent, task: Task): void
@@ -177,7 +183,7 @@ export class TaskStore
   }
 }
 
-// ─── Constantes partagées ─────────────────────────────────────────────────────
+//shared constants
 
 export const PRIORITY_ORDER: Priority[] = ["urgent", "high", "normal", "low"];
 export const PRIORITY_LABELS: Record<Priority, string> =

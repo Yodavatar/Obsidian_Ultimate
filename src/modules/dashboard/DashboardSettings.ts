@@ -1,4 +1,5 @@
-export interface DashboardSettings {
+export interface DashboardSettings
+{
   wallpaperPath: string;
   wallpaperOpacity: number;
   showClock: boolean;
@@ -6,7 +7,8 @@ export interface DashboardSettings {
   openOnStartup: boolean;
 }
 
-export const DEFAULT_DASHBOARD_SETTINGS: DashboardSettings = {
+export const DEFAULT_DASHBOARD_SETTINGS: DashboardSettings =
+{
   wallpaperPath: "",
   wallpaperOpacity: 0.5,
   showClock: true,
