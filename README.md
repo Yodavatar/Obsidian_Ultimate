@@ -78,7 +78,7 @@ Then you need to activate community plugins.<br>
 
 
 
-Put the project in the folder "pluggin".<br>
+Put the project in the folder "plugins".<br>
 
 <img width="269" height="192" alt="image" src="https://github.com/user-attachments/assets/c50001d9-57a3-470f-9529-a86e2396ed9a" />
 
