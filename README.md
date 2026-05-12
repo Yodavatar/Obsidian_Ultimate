@@ -1,7 +1,7 @@
-# Obsidian Ultimate
 <img width="1000" height="600" alt="image" src="https://github.com/user-attachments/assets/7d687af3-eb92-4c49-a3ea-baaf3dce81c6" />
 <br>
-__**Version 0.1.0**__<br>
+
+__**Version 0.1.0**__ <br>
 
 ## Table of Contents
 
