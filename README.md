@@ -88,7 +88,7 @@ Install dependencies<br>
     npm run build //run in the good folder
    ```
 Now you return in the Community plugins.<br>
-You you should see that the pluggin.<br>
+You should see that the pluggin.<br>
 The final step is to activate the plugin. <br>
 <img width="542" height="310" alt="image" src="https://github.com/user-attachments/assets/3538d300-c564-42c0-9839-ed2cf28022b6" />
 
