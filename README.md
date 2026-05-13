@@ -76,7 +76,7 @@ To install Obsidian Ultimate, you can:
 1. **Clone the repository**:
 
    ```bash
-   git clone https://github.com/yodavatar/Obsidian_Ultimate.git
+   git clone git@github.com:Yodavatar/Obsidian_Ultimate.git
    ```
    
 2. **Get to zip**:
