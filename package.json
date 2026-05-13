@@ -1,7 +1,7 @@
 {
-  "name": "Obsidian Ultimate",
-  "version": "0.1.5",
-  "description": "All-in-one modular plugin for Obsidian.",
+  "name": "harmony",
+  "version": "0.1.6",
+  "description": "All-in-one modular plugin for boost productivity.",
   "main": "main.js",
   "scripts": {
     "dev": "node esbuild.config.mjs",

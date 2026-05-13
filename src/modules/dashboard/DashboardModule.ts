@@ -1,5 +1,5 @@
 import { App } from "obsidian";
-import type Obsidian_Ultimate from "../../main";
+import type Harmony from "../../main";
 import type { IModule } from "../../shared/types";
 import { DashboardView, DASHBOARD_VIEW_TYPE } from "./DashboardView";
 import { DEFAULT_DASHBOARD_SETTINGS, type DashboardSettings } from "./DashboardSettings";
@@ -13,12 +13,12 @@ export class DashboardModule implements IModule
   name = "Dashboard";
 
   private app: App;
-  private plugin: Obsidian_Ultimate;
+  private plugin: Harmony;
   public taskstore: TaskStore;
   private settings: DashboardSettings;
   private unsubLang?: () => void;
 
-  constructor(app: App, plugin: Obsidian_Ultimate, taskstore:TaskStore )
+  constructor(app: App, plugin: Harmony, taskstore:TaskStore )
   {
     this.app = app;
     this.plugin = plugin;

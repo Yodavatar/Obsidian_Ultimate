@@ -3,7 +3,7 @@
 
 <br>
 
-__**Version 0.1.5**__ <br>
+__**Version 0.1.6**__ <br>
 
 ## Table of Contents
 
@@ -17,7 +17,7 @@ __**Version 0.1.5**__ <br>
 
 ## Introduction
 
-The goal of Obsidian Ultimate is to make Obsidian<br>
+The goal of Harmony is to make Obsidian<br>
 as powerful as a professional tool (like Notion),<br>
 but 100% local and open source.<br><br>
 
@@ -25,7 +25,7 @@ Be as productive as possible by staying in control of your data.<br>
 There are many ways to be more productive;<br>
 the methods we are trying to implement are [here](https://www.todoist.com/en/productivity-methods).<br>
 
-Obsidian Ultimate is open to contribution.
+Harmony is open to contribution.
 
 ## Features
 
@@ -64,14 +64,14 @@ A simple to-do list organized by priority.<br>
 
 __**4 - Activated/Desactivated module**__
 
-Enable or disable the module you need, in the Ultimate Obsidian settings.<br>
+Enable or disable the module you need, in the Harmony settings.<br>
 
 <img width="471.5" height="451" alt="image" src="https://github.com/user-attachments/assets/237181cf-248d-4817-a26e-484bad7717c0" />
 
 
 ## Installation
 
-To install Obsidian Ultimate, you can:
+To install Harmony, you can:
 
 1. **Clone the repository**:
 
@@ -80,11 +80,11 @@ To install Obsidian Ultimate, you can:
    ```
    
 2. **Get to zip**:
-   You can get the link to the zip [here](https://github.com/Yodavatar/Obsidian_Ultimate/archive/refs/heads/main.zip).<br>
+   You can get the link to the zip [here](https://github.com/Yodavatar/harmony/archive/refs/heads/main.zip).<br>
 
 ## Usage
 
-To use Obsidian Ultimate you need to have last obsidian's version.<br>
+To use Harmony you need to have last obsidian's version.<br>
 You can install Obsidian on [here](https://obsidian.md/download).<br><br>
 
 <img width="470" height="270" alt="image" src="https://github.com/user-attachments/assets/ab6c8a58-fc32-497b-b1cc-6db0a27104a4" /><br>
@@ -113,7 +113,7 @@ The final step is to activate the plugin. <br>
 ## Contribution
 
 I appreciate the others contributions from the community!<br>
-To contribute to Obsidian_Ultimate, follow these steps:<br>
+To contribute to Harmony, follow these steps:<br>
 
 
 __**If you want contribute to this project.**__
@@ -134,7 +134,7 @@ See the [GNU AFFERO GENERAL PUBLIC LICENSE](LICENSE) file for details.<br>
 
 ## Discussions
 
-The Discussions are open [here](https://github.com/Yodavatar/Obsidian_Ultimate/discussions).
+The Discussions are open [here](https://github.com/Yodavatar/Harmony/discussions).
 
 ## Contact
 

@@ -1,13 +1,13 @@
 
-# Obsidian Ultimate - Roadmap
+# Harmony - Roadmap
 
-Obsidian Ultimate is an open project.
+Harmony is an open project.
 Help us bring it to life by requesting features
 and reporting bugs.
 
 ## Planned Releases
 
-### v0.1.6 - Calendar
+### v0.1.7 - Calendar
 
 **Timeline:** Mai 2026
 
@@ -17,7 +17,7 @@ and reporting bugs.
     - Drag & drop tasks between dates
     - Visual indicators for task priorities
 
-### v0.1.7 Advanced Search
+### v0.1.8 Advanced Search
 
 **Timeline** : June 2026 
 
@@ -70,7 +70,7 @@ See [CONTRIBUTING.md](https://claude.ai/chat/CONTRIBUTING.md) for guidelines on 
 ## 💬 Feedback
 
 Have an idea or found a bug?
-Open an issue on [GitHub Issues](https://github.com/Yodavatar/Obsidian_Ultimate/issues) or start a discussion on [GitHub Discussions](https://github.com/Yodavatar/Obsidian_Ultimate/discussions).
+Open an issue on [GitHub Issues](https://github.com/Yodavatar/Harmony/issues) or start a discussion on [GitHub Discussions](https://github.com/Yodavatar/Harmony/discussions).
 
 ---
 

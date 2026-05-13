@@ -1,5 +1,5 @@
 import { App } from "obsidian";
-import type Obsidian_Ultimate from "../../main";
+import type Harmony from "../../main";
 import type { IModule } from "../../shared/types";
 import type { TaskStore } from "../../shared/taskstore";
 import { KanbanStore } from "./KanbanStore";
@@ -12,12 +12,12 @@ export class KanbanModule implements IModule
   name = "Kanban";
 
   private app: App;
-  private plugin: Obsidian_Ultimate;
+  private plugin: Harmony;
   private store: KanbanStore;
   private taskStore: TaskStore;
   private unsubLang?: () => void;
 
-  constructor(app: App, plugin: Obsidian_Ultimate, taskStore: TaskStore)
+  constructor(app: App, plugin: Harmony, taskStore: TaskStore)
   {
     this.app = app;
     this.plugin = plugin;

@@ -3,7 +3,7 @@ import { TodoStore } from "./TodoStore";
 import { PRIORITY_COLORS, PRIORITY_ORDER, getPriorityLabels, Priority } from "../../shared/taskstore";
 import { t } from "../../core/i18n";
 
-export const TODO_VIEW_TYPE = "obsidian_ultimate-todo";
+export const TODO_VIEW_TYPE = "Harmony-todo";
 
 export class TodoView extends ItemView
 {

@@ -1,11 +1,11 @@
 import { PRIORITY_COLORS, PRIORITY_ORDER, getPriorityLabels, Priority, TaskStore } from "../../shared/taskstore";
-import { ItemView, WorkspaceLeaf, FileSystemAdapter, TFile } from "obsidian";
+import { ItemView, WorkspaceLeaf, FileSystemAdapter } from "obsidian";
 import type { DashboardSettings } from "./DashboardSettings";
 import type { DashboardModule } from "./DashboardModule";
 import { t } from "../../core/i18n";
 
 
-export const DASHBOARD_VIEW_TYPE = "obsidian_ultimate-dashboard";
+export const DASHBOARD_VIEW_TYPE = "Harmony-dashboard";
 
 export class DashboardView extends ItemView
 {
@@ -159,7 +159,7 @@ export class DashboardView extends ItemView
 
   //Wallpaper
   // We use FileSystemAdapter.getResourcePath() because the files stored in
-  // hidden folders (e.g..Obsidian_Ultimate/) are not indexed in TFile.
+  // hidden folders (e.g..Harmony/) are not indexed in TFile.
   private applyWallpaper(root: HTMLElement): void
   {
     if (!this.s.wallpaperPath) return;
@@ -298,7 +298,7 @@ export class DashboardView extends ItemView
       fileInput.addEventListener("change", async () => {
         const file = fileInput.files?.[0];
         if (!file) return;
-        const destDir  = ".Obsidian_Ultimate/dashboard";
+        const destDir  = ".Harmony/dashboard";
         const destPath = `${destDir}/${file.name}`;
         if (!(await this.app.vault.adapter.exists(destDir))) {
           await this.app.vault.adapter.mkdir(destDir);
@@ -367,7 +367,7 @@ export class DashboardView extends ItemView
   //Styles
   private injectStyles(): void
   {
-    const id = "obsidian_ultimate_dashboard_styles";
+    const id = "Harmony_dashboard_styles";
     if (document.getElementById(id)) return;
     const s = document.createElement("style");
     s.id = id;

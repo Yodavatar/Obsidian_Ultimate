@@ -13,7 +13,7 @@ export type Language = "en" | "fr";
 const EN: Record<number, string> =
 {
   //Core Settings
-  1:  "Obsidian Ultimate",
+  1:  "Harmony",
   2:  "Activate or deactivate the modules below. Changes are immediate.",
   3:  "Community",
   4:  "Vote for the next feature",
@@ -130,7 +130,7 @@ const EN: Record<number, string> =
 const FR: Partial<Record<number, string>> =
 {
   //Core Settings
-  1:  "Obsidian Ultimate",
+  1:  "Harmony",
   2:  "Active ou désactive les modules ci-dessous. Les changements sont immédiats.",
   3:  "Communauté",
   4:  "Voter pour la prochaine feature",

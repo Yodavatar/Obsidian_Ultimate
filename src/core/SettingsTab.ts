@@ -1,12 +1,12 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
 import { t, setLanguage, type Language } from "./i18n";
-import type Obsidian_Ultimate from "../main";
+import type Harmony from "../main";
 
-export class Obsidian_Ultimate_Settings_Tab extends PluginSettingTab
+export class Harmony_Settings_Tab extends PluginSettingTab
 {
-  plugin: Obsidian_Ultimate;
+  plugin: Harmony;
 
-  constructor(app: App, plugin: Obsidian_Ultimate)
+  constructor(app: App, plugin: Harmony)
   {
     super(app, plugin);
     this.plugin = plugin;
@@ -55,7 +55,7 @@ export class Obsidian_Ultimate_Settings_Tab extends PluginSettingTab
         .setButtonText(t(6))
         .setCta()
         .onClick(() => {
-          window.open("https://github.com/yodavatar/Obsidian_Ultimate/discussions", "_blank");
+          window.open("https://github.com/yodavatar/Harmony/discussions", "_blank");
         })
       );
 
@@ -65,7 +65,7 @@ export class Obsidian_Ultimate_Settings_Tab extends PluginSettingTab
       .addButton(btn => btn
         .setButtonText(t(9))
         .onClick(() => {
-          window.open("https://github.com/yodavatar/Obsidian_Ultimate/projects", "_blank");
+          window.open("https://github.com/yodavatar/Harmony/projects", "_blank");
         })
       );
 
@@ -106,12 +106,12 @@ export class Obsidian_Ultimate_Settings_Tab extends PluginSettingTab
                 this.plugin.registry.disable(module.id);
               }
               
-              // Forcer le rechargement du plugin pour nettoyer les vues
+              // Force reload of the plugin to clean up views
               // @ts-ignore
               this.app.plugins.disablePlugin(this.plugin.manifest.id);
               // @ts-ignore
               await this.app.plugins.enablePlugin(this.plugin.manifest.id);
-              // Rouvrir les settings sur la bonne page
+              //Open the settings on the good page
               // @ts-ignore
               this.app.setting.openTabById(this.plugin.manifest.id);
             });

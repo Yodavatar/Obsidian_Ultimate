@@ -1,16 +1,18 @@
 import { App, normalizePath, Modal} from "obsidian";
 import { t } from "../../core/i18n";
-import type { TaskStore, Task, Priority } from "../../shared/taskstore";
+import type { TaskStore, Task } from "../../shared/taskstore";
 
 export type KanbanCard = Task;
 
-export interface KanbanColumn {
+export interface KanbanColumn
+{
   id: string;
   title: string;
   color?: string;
 }
 
-export interface KanbanBoardData {
+export interface KanbanBoardData
+{
   id: string;
   title: string;
   columns: KanbanColumn[];
@@ -18,7 +20,7 @@ export interface KanbanBoardData {
   updatedAt: string;
 }
 
-const DATA_DIR = normalizePath(".obsidian_ultimate/kanban");
+const DATA_DIR = normalizePath(".Harmony/kanban");
 
 export class KanbanStore
 {

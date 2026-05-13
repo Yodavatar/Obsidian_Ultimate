@@ -1,5 +1,5 @@
 import { App } from "obsidian";
-import type Obsidian_Ultimate from "../../main";
+import type Harmony from "../../main";
 import { IModule } from "../../shared/types";
 import { TaskStore } from "../../shared/taskstore";
 import { TodoStore } from "./TodoStore";
@@ -12,11 +12,11 @@ export class TodoModule implements IModule
   name = "Todo List";
 
   private app:App;
-  private plugin: Obsidian_Ultimate;
+  private plugin: Harmony;
   private store: TodoStore;
   private unsubLang?: () => void;
 
-  constructor(app: App, plugin: Obsidian_Ultimate, taskStore: TaskStore)
+  constructor(app: App, plugin: Harmony, taskStore: TaskStore)
   {
     this.app = app;
     this.plugin = plugin;

@@ -9,11 +9,11 @@ export class ModuleRegistry
   {
     if (this.modules.has(module.id))
     {
-      console.warn(`[Obsidian Ultimate] Module "${module.id}" déjà enregistré, ignoré.`);
+      console.warn(`[Harmony] Module "${module.id}" déjà enregistré, ignoré.`);
       return;
     }
     this.modules.set(module.id, module);
-    console.log(`[Obsidian Ultimate] Module "${module.id}" enregistré.`);
+    console.log(`[Harmony] Module "${module.id}" enregistré.`);
   }
 
   async enable(moduleId: string): Promise<void>
@@ -21,7 +21,7 @@ export class ModuleRegistry
     const module = this.modules.get(moduleId);
     if (!module)
     {
-      console.error(`[Obsidian Ultimate] Module "${moduleId}" introuvable.`);
+      console.error(`[Harmony] Module "${moduleId}" introuvable.`);
       return;
     }
 
@@ -30,29 +30,34 @@ export class ModuleRegistry
     await module.onload();
     this.activeModules.add(moduleId);
 
-    console.log(`[Obsidian Ultimate] Module "${moduleId}" activé.`);
+    console.log(`[Harmony] Module "${moduleId}" activé.`);
   }
 
-  disable(moduleId: string): void {
+  disable(moduleId: string): void
+  {
     const module = this.modules.get(moduleId);
     if (!module || !this.activeModules.has(moduleId)) return;
 
     module.onunload();
     this.activeModules.delete(moduleId);
-    console.log(`[Obsidian Ultimate] Module "${moduleId}" désactivé.`);
+    console.log(`[Harmony] Module "${moduleId}" désactivé.`);
   }
 
-  unloadAll(): void {
-    for (const id of this.activeModules) {
+  unloadAll(): void
+  {
+    for (const id of this.activeModules)
+    {
       this.disable(id);
     }
   }
 
-  isActive(moduleId: string): boolean {
+  isActive(moduleId: string): boolean
+  {
     return this.activeModules.has(moduleId);
   }
 
-  getAll(): IModule[] {
+  getAll(): IModule[]
+  {
     return Array.from(this.modules.values());
   }
 }

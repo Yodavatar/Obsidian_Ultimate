@@ -1,9 +1,9 @@
 {
-  "id": "obsidian-ultimate",
-  "name": "Obsidian Ultimate",
-  "version": "0.1.5",
+  "id": "harmony",
+  "name": "Harmony",
+  "version": "0.1.6",
   "minAppVersion": "1.4.0",
-  "description": "All-in-one modular plugin for Obsidian.",
+  "description": "All-in-one modular plugin for boost productivity.",
   "author": "Yodavatar",
   "authorUrl": "https://github.com/Yodavatar",
   "isDesktopOnly": false

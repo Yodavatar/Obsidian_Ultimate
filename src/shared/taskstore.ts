@@ -44,7 +44,7 @@ type ChangeListener = (event: ChangeEvent, task: Task) => void;
 
 //Constants
 
-const DATA_PATH = normalizePath(".obsidian_ultimate/tasks.json");
+const DATA_PATH = normalizePath(".Harmony/tasks.json");
 
 //TaskStore
 
@@ -76,7 +76,7 @@ export class TaskStore
         const raw = await this.app.vault.adapter.read(DATA_PATH);
         try {
           const arr: Task[] = JSON.parse(raw);
-          this.tasks.clear(); // Sécurité
+          this.tasks.clear(); // Security
           for (const t of arr) this.tasks.set(t.id, t);
         } catch (e) { console.error("Erreur JSON", e); }
       }
@@ -94,7 +94,7 @@ export class TaskStore
       return;
     }
     
-    const dir = normalizePath(".obsidian_ultimate");
+    const dir = normalizePath(".Harmony");
     if (!(await this.app.vault.adapter.exists(dir)))
       await this.app.vault.adapter.mkdir(dir);
 

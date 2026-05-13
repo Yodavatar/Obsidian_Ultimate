@@ -18,14 +18,14 @@ export interface IModule
  * Each module has its own key for its settings.
  */
 
-export interface Obsidian_Ultimate_Settings
+export interface Harmony_Settings
 {
   enabledModules: Record<string, boolean>;
   moduleSettings: Record<string, unknown>;
   language: Language;
 }
 
-export const DEFAULT_SETTINGS: Obsidian_Ultimate_Settings =
+export const DEFAULT_SETTINGS: Harmony_Settings =
 {
   enabledModules: {},
   moduleSettings: {},

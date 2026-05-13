@@ -1,24 +1,24 @@
 //Necessary modules
 import { Plugin } from "obsidian";
 import { ModuleRegistry } from "./core/ModuleRegistry";
-import { Obsidian_Ultimate_Settings_Tab } from "./core/SettingsTab";
+import { Harmony_Settings_Tab } from "./core/SettingsTab";
 import { setLanguage } from "./core/i18n";
 import { TaskStore } from "./shared/taskstore";
-import { DEFAULT_SETTINGS, type Obsidian_Ultimate_Settings } from "./shared/types";
+import { DEFAULT_SETTINGS, type Harmony_Settings } from "./shared/types";
 
 //All modules one in all
 import { KanbanModule } from "./modules/kanban/KanbanModule";
 import { DashboardModule } from "./modules/dashboard/DashboardModule";
 import { TodoModule } from "./modules/todolist/TodoModule";
 
-export default class Obsidian_Ultimate extends Plugin
+export default class Harmony extends Plugin
 {
-  settings: Obsidian_Ultimate_Settings;
+  settings: Harmony_Settings;
   registry: ModuleRegistry;
   taskStore: TaskStore;
 
   async onload() {
-    console.log("[Obsidian Ultimate] Chargement...");
+    console.log("[Harmony] Load...");
     await this.loadSettings();
     setLanguage(this.settings.language);
 
@@ -38,13 +38,13 @@ export default class Obsidian_Ultimate extends Plugin
         await this.registry.enable(moduleId);
       }
     }
-    this.addSettingTab(new Obsidian_Ultimate_Settings_Tab(this.app, this));
-    console.log("[Obsidian Ultimate] Prêt !");
+    this.addSettingTab(new Harmony_Settings_Tab(this.app, this));
+    console.log("[Harmony] Ready !");
   }
 
   onunload()
   {
-    console.log("[Obsidian Ultimate] Déchargement...");
+    console.log("[Harmony] Unload...");
     this.registry.unloadAll();
   }
 

@@ -3,7 +3,7 @@ import type { KanbanStore, KanbanBoardData } from "./KanbanStore";
 import { KanbanBoard } from "./KanbanBoard";
 import { t } from "../../core/i18n";
 
-export const KANBAN_VIEW_TYPE = "obsidian_ultimate-kanban";
+export const KANBAN_VIEW_TYPE = "Harmony-kanban";
 
 export class KanbanView extends ItemView
 {
@@ -153,7 +153,7 @@ export class KanbanView extends ItemView
 
   private injectStyles(): void
   {
-    const styleId = "obsidian_ultimate_kanban_styles";
+    const styleId = "Harmony_kanban_styles";
     if (document.getElementById(styleId)) return;
     const style = document.createElement("style");
     style.id = styleId;
