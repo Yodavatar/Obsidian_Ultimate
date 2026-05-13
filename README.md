@@ -29,29 +29,44 @@ Obsidian Ultimate is open to contribution.
 
 ## Features
 
-__**1 - Activated/Desactivated module**__
-
-Enable or disable the module you need, in the Ultimate Obsidian settings.<br>
-<img width="415" height="320" alt="image" src="https://github.com/user-attachments/assets/faab3fca-f022-43d5-a7a9-27b03a7f1cd1" />
-
-__**2 - Dashboard module**__
+__**1 - Dashboard module**__
 
 Dashboard in a new window.<br>
 
-- Quick links<br>
+<img width="640" height="380" alt="image" src="https://github.com/user-attachments/assets/09d308ef-9482-4999-906d-eaeb1bcfda9f" />
+<br>
+
 - Urgent tasks<br>
 - Next tasks<br>
 - +More customization options<br>
 
-__**1 - Better Kanban module**__
+__**2 - Better Kanban module**__
 
-Kanban is a methode of organisation for a to do list.
+Kanban is a methode of organisation for a to do list.<br>
+
+<img width="639" height="380" alt="Capture d&#39;écran 2026-05-13 104048" src="https://github.com/user-attachments/assets/9a80d921-e57a-4d81-b7bb-d3ad9c91dba4" /> <br>
 
 - Support for multiple boards
 - Multiple columns (move left/right, change color, delete)
 - Create tasks (multiple priorities, due dates, links, tags, delete)
 - Archiving features for notes
 - Sort tasks
+
+__**3 - Minimalist Todo List**__
+
+A simple to-do list organized by priority.<br>
+
+<img width="640" height="375" alt="image" src="https://github.com/user-attachments/assets/39ce8cd3-bd6c-4ceb-b193-d64191339141" />
+
+- create a quick task
+- Change priority / delete
+
+
+__**4 - Activated/Desactivated module**__
+
+Enable or disable the module you need, in the Ultimate Obsidian settings.<br>
+<img width="415" height="320" alt="image" src="https://github.com/user-attachments/assets/faab3fca-f022-43d5-a7a9-27b03a7f1cd1" />
+
 
 ## Installation
 
