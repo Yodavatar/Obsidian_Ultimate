@@ -17,7 +17,7 @@ export class TodoView extends ItemView
   }
 
   getViewType(): string { return TODO_VIEW_TYPE; }
-  getDisplayText(): string { return "Ma Todo List"; }
+  getDisplayText(): string { return "Todo List"; }
   getIcon(): string { return "check-check"; }
 
   async onOpen() {
