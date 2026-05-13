@@ -4,9 +4,10 @@ import { IModule } from "../../shared/types";
 import { TaskStore } from "../../shared/taskstore";
 import { TodoStore } from "./TodoStore";
 import { TodoView, TODO_VIEW_TYPE } from "./Todoview";
-import { t, onLanguageChange } from "../../core/i18n";
+import { onLanguageChange } from "../../core/i18n";
 
-export class TodoModule implements IModule {
+export class TodoModule implements IModule
+{
   id = "todo";
   name = "Todo List";
 
