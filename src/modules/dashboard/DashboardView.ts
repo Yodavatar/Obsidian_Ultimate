@@ -1,7 +1,9 @@
-import { ItemView, WorkspaceLeaf, FileSystemAdapter } from "obsidian";
+import { PRIORITY_ORDER, PRIORITY_COLORS, PRIORITY_LABELS, TaskStore } from "../../shared/taskstore";
+import { ItemView, WorkspaceLeaf, FileSystemAdapter, TFile } from "obsidian";
 import type { DashboardSettings } from "./DashboardSettings";
 import type { DashboardModule } from "./DashboardModule";
-import { t, onLanguageChange } from "../../core/i18n";
+import { t } from "../../core/i18n";
+
 
 export const DASHBOARD_VIEW_TYPE = "obsidian_ultimate-dashboard";
 
@@ -11,10 +13,13 @@ export class DashboardView extends ItemView
   private clockInterval: number | null = null;
   private searchTimeout: number | null = null;
 
-  constructor(leaf: WorkspaceLeaf, module: DashboardModule)
+  taskstore : TaskStore;
+
+  constructor(leaf: WorkspaceLeaf, module: DashboardModule, taskstore:TaskStore)
   {
     super(leaf);
     this.module = module;
+    this.taskstore = taskstore;
   }
 
   getViewType() { return DASHBOARD_VIEW_TYPE; }
@@ -25,6 +30,14 @@ export class DashboardView extends ItemView
 
   async onOpen(): Promise<void>
   {
+    const unsubsribe = this.module.taskstore.on(() =>
+    {
+      this.render(); 
+    });
+
+    //Optimization
+    this.register(() => unsubsribe());
+
     //make sure that one dashboard opens at a time
     this.app.workspace.getLeavesOfType(DASHBOARD_VIEW_TYPE).forEach(leaf =>
     {
@@ -35,11 +48,13 @@ export class DashboardView extends ItemView
     this.render();
   }
 
-  async onClose(): Promise<void> {
+  async onClose(): Promise<void>
+  {
     if (this.clockInterval) window.clearInterval(this.clockInterval);
   }
 
-  render(): void {
+  render(): void
+  {
     if (this.clockInterval) { window.clearInterval(this.clockInterval); this.clockInterval = null; }
     const root = this.containerEl.children[1] as HTMLElement;
     root.empty();
@@ -58,6 +73,81 @@ export class DashboardView extends ItemView
 
     if (this.s.showClock) this.renderClock(center);
     this.renderSearch(center);
+    this.renderTasks(center);
+  }
+
+  //Get tasks
+  private renderTasks(parent: HTMLElement): void
+  {
+    const tasks = this.module.taskstore.getTasks({ done: false, archived: false });
+  
+    tasks.sort((a, b) =>
+    {
+      const priorityA = PRIORITY_ORDER.indexOf(a.priority);
+      const priorityB = PRIORITY_ORDER.indexOf(b.priority);
+      if (priorityA !== priorityB) return priorityA - priorityB;
+      if (a.dueDate && b.dueDate) return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+      if (a.dueDate) return -1;
+      if (b.dueDate) return 1;
+      return 0;
+    });
+  
+    const urgentTasks = tasks.slice(0, 6);
+    if (urgentTasks.length === 0) return;
+  
+    const tasksContainer = parent.createDiv("dash-tasks-container"); 
+    tasksContainer.createEl("h4", { text: "Tâches urgentes", cls: "dash-section-title" });
+    const tasksGrid = tasksContainer.createDiv("dash-tasks-horizontal");
+
+    for (const task of urgentTasks)
+    {
+      const taskCard = tasksGrid.createDiv("dash-task-card");
+      const header = taskCard.createDiv("dash-card-header");
+      const prioritySpan = header.createSpan(
+      {
+        cls: "dash-task-priority",
+        text: PRIORITY_LABELS[task.priority],
+      });
+      prioritySpan.style.color = PRIORITY_COLORS[task.priority];
+
+      const checkbox = header.createEl("input", { type: "checkbox" });
+      checkbox.checked = task.done ?? false;
+      checkbox.addEventListener("change", async (e) =>
+      {
+        e.stopPropagation();
+        await this.module.taskstore.updateTask(task.id, { done: checkbox.checked });
+      });
+
+      taskCard.createDiv({ text: task.title, cls: "dash-task-title" });
+      const footer = taskCard.createDiv("dash-card-footer");
+      
+      if (task.dueDate)
+      {
+        const date = new Date(task.dueDate);
+        footer.createSpan(
+        { 
+          text: date.toLocaleDateString("fr-FR", { day: "numeric", month: "short" }), 
+          cls: "dash-task-date" 
+        });
+      }
+
+      const deleteBtn = footer.createEl("button", { cls: "dash-btn-icon", text: "🗑" });
+      deleteBtn.addEventListener("click", async (e) =>
+      {
+        e.stopPropagation();
+        await this.module.taskstore.deleteTask(task.id);
+      });
+
+      if (task.noteLink)
+      {
+        taskCard.addEventListener("click", (e) =>
+        {
+          if ((e.target as HTMLElement).tagName === "INPUT" || (e.target as HTMLElement).tagName === "BUTTON") return;
+          const file = this.app.vault.getAbstractFileByPath(task.noteLink!);
+          if (file instanceof TFile) this.leaf.openFile(file);
+        });
+      }
+    }
   }
 
   //Wallpaper
@@ -66,6 +156,19 @@ export class DashboardView extends ItemView
   private applyWallpaper(root: HTMLElement): void
   {
     if (!this.s.wallpaperPath) return;
+
+    //If path begin by https, it is a url
+    //Electron or Obsidian is blocking the download... I haven't found another solution
+    /*
+    if (this.s.wallpaperPath.startsWith("https"))
+    {
+      root.style.backgroundImage = `url("${this.s.wallpaperPath}")`;
+      root.style.backgroundSize = "cover";
+      root.style.backgroundPosition = "center";
+      return;
+    }
+    */
+
     const adapter = this.app.vault.adapter;
     if (!(adapter instanceof FileSystemAdapter)) return;
     const url = adapter.getResourcePath(this.s.wallpaperPath);
@@ -312,6 +415,7 @@ export class DashboardView extends ItemView
         align-items: center;
         gap: 24px;
         width: 100%;
+        padding: 0 20px;
       }
 
       /* Horloge */
@@ -332,6 +436,18 @@ export class DashboardView extends ItemView
         opacity: 0.8;
         margin-top: 6px;
         letter-spacing: 1px;
+      }
+
+      .dash-task-actions {
+        display: none;
+        gap: 4px;
+      }
+      .dash-task-item:hover .dash-task-actions {
+        display: flex;
+      }
+      .dash-btn-small {
+        padding: 3px 8px !important;
+        font-size: 0.7em !important;
       }
 
       /* Barre de recherche */
@@ -473,6 +589,87 @@ export class DashboardView extends ItemView
         border-color: transparent;
       }
       .dash-btn-primary:hover { filter: brightness(1.1); }
+      /* Conteneur principal des tâches */
+      .dash-tasks-container {
+          width: 100%;
+          max-width: 1200px;
+          margin-top: 20px;
+      }
+
+      .dash-section-title {
+          color: #fff;
+          font-size: 0.9em;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          margin-bottom: 15px;
+          opacity: 0.8;
+      }
+
+      /* Alignement horizontal */
+      .dash-tasks-horizontal {
+          display: flex !important;
+          flex-direction: row !important; /* Aligne en ligne */
+          flex-wrap: nowrap !important;   /* Empêche le retour à la ligne */
+          gap: 16px;           /* Espace entre les boîtes */
+          overflow-x: auto;    /* Active le menu déroulant horizontal */
+          width: 100%;
+          padding: 15px 5px;
+          scrollbar-width: none; /* Pour un scroll plus joli sur Firefox */
+      }
+
+      .dash-tasks-horizontal::-webkit-scrollbar { display: none; }
+
+
+      /* Style de la Carte */
+      .dash-task-card {
+          flex: 0 0 220px !important;    /* IMPORTANT : Largeur fixe de 200px, ne rétrécit pas */
+          min-height: 130px;
+          background: rgba(255, 255, 255, 0.1);
+          backdrop-filter: blur(10px);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          border-radius: 12px;
+          padding: 15px;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+      }
+
+      .dash-task-card:hover {
+          background: rgba(255, 255, 255, 0.15);
+          transform: translateY(-5px);
+      }
+
+      .dash-card-header, .dash-card-footer {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+      }
+
+      .dash-task-title {
+          font-weight: 500;
+          color: white;
+          margin: 10px 0;
+          font-size: 0.9em;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+      }
+
+      .dash-task-priority { font-size: 0.7em; font-weight: bold; text-transform: uppercase; }
+      .dash-task-date { font-size: 0.75em; color: rgba(255, 255, 255, 0.6); }
+
+      .dash-btn-icon {
+          background: none;
+          border: none;
+          padding: 0;
+          cursor: pointer;
+          opacity: 0.4;
+          transition: opacity 0.2s;
+      }
+      .dash-btn-icon:hover { opacity: 1; }
+
+      .is-done { opacity: 0.5; text-decoration: line-through; }
     `;
     document.head.appendChild(s);
   }

@@ -4,6 +4,8 @@ import type { IModule } from "../../shared/types";
 import { DashboardView, DASHBOARD_VIEW_TYPE } from "./DashboardView";
 import { DEFAULT_DASHBOARD_SETTINGS, type DashboardSettings } from "./DashboardSettings";
 import { t, onLanguageChange } from "../../core/i18n";
+import { TaskStore } from "../../shared/taskstore";
+
 
 export class DashboardModule implements IModule
 {
@@ -12,13 +14,15 @@ export class DashboardModule implements IModule
 
   private app: App;
   private plugin: Obsidian_Ultimate;
+  public taskstore: TaskStore;
   private settings: DashboardSettings;
   private unsubLang?: () => void;
 
-  constructor(app: App, plugin: Obsidian_Ultimate)
+  constructor(app: App, plugin: Obsidian_Ultimate, taskstore:TaskStore )
   {
     this.app = app;
     this.plugin = plugin;
+    this.taskstore = taskstore;
     this.settings =
     {
       ...DEFAULT_DASHBOARD_SETTINGS,
@@ -41,7 +45,7 @@ export class DashboardModule implements IModule
   {
     this.plugin.registerView(
       DASHBOARD_VIEW_TYPE,
-      (leaf) => new DashboardView(leaf, this)
+      (leaf) => new DashboardView(leaf, this, this.taskstore)
     );
 
     this.unsubLang = onLanguageChange(() =>

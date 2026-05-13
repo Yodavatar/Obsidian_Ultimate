@@ -1,6 +1,7 @@
 import { App } from "obsidian";
 import type Obsidian_Ultimate from "../../main";
 import type { IModule } from "../../shared/types";
+import type { TaskStore } from "../../shared/taskstore";
 import { KanbanStore } from "./KanbanStore";
 import { KanbanView, KANBAN_VIEW_TYPE } from "./KanbanView";
 import { t, onLanguageChange } from "../../core/i18n";
@@ -13,13 +14,15 @@ export class KanbanModule implements IModule
   private app: App;
   private plugin: Obsidian_Ultimate;
   private store: KanbanStore;
+  private taskStore: TaskStore;
   private unsubLang?: () => void;
 
-  constructor(app: App, plugin: Obsidian_Ultimate)
+  constructor(app: App, plugin: Obsidian_Ultimate, taskStore: TaskStore)
   {
     this.app = app;
     this.plugin = plugin;
-    this.store = new KanbanStore(app);
+    this.taskStore = taskStore;
+    this.store = new KanbanStore(app,taskStore);
   }
 
   async onload(): Promise<void>

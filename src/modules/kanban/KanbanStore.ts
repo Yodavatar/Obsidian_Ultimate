@@ -43,9 +43,10 @@ export class KanbanStore
   private app: App;
   private taskStore: TaskStore;
 
-  constructor(app: App)
+  constructor(app: App, taskStore: TaskStore)
   {
     this.app = app;
+    this.taskStore = taskStore;
   }
 
   private boardPath(boardId: string): string

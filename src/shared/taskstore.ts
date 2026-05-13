@@ -1,4 +1,5 @@
 import { App, normalizePath } from "obsidian";
+import { t } from "../core/i18n";
 
 //types
 
@@ -60,28 +61,39 @@ export class TaskStore
   }
 
   //Init
+  private loadPromise: Promise<void> | null = null;
 
   async load(): Promise<void>
   {
     if (this.loaded) return;
+    if (this.loadPromise) return this.loadPromise;
 
-    const exists = await this.app.vault.adapter.exists(DATA_PATH);
-    if (exists)
+    this.loadPromise = (async () =>
     {
-      const raw = await this.app.vault.adapter.read(DATA_PATH);
-      try
-      {
-        const arr: Task[] = JSON.parse(raw);
-        for (const t of arr) this.tasks.set(t.id, t);
+      const exists = await this.app.vault.adapter.exists(DATA_PATH);
+      if (exists)
+        {
+        const raw = await this.app.vault.adapter.read(DATA_PATH);
+        try {
+          const arr: Task[] = JSON.parse(raw);
+          this.tasks.clear(); // Sécurité
+          for (const t of arr) this.tasks.set(t.id, t);
+        } catch (e) { console.error("Erreur JSON", e); }
       }
-      catch (e) { console.error("[TaskStore] error pars of tasks.json", e); }
-    }
+      this.loaded = true;
+    })();
 
-    this.loaded = true;
+    return this.loadPromise;
   }
 
   private async persist(): Promise<void>
   {
+    if (!this.loaded)
+    {
+      console.warn("[TaskStore] Tentative de sauvegarde avant chargement, annulée.");
+      return;
+    }
+    
     const dir = normalizePath(".obsidian_ultimate");
     if (!(await this.app.vault.adapter.exists(dir)))
       await this.app.vault.adapter.mkdir(dir);
@@ -188,10 +200,10 @@ export class TaskStore
 export const PRIORITY_ORDER: Priority[] = ["urgent", "high", "normal", "low"];
 export const PRIORITY_LABELS: Record<Priority, string> =
 {
-  urgent: "🔴 Urgent",
-  high:   "🟠 Haute",
-  normal: "🟢 Normale",
-  low:    "🫙 Basse",
+  urgent: "🔴 " + t(142),
+  high:   "🟠 " + t(143),
+  normal: "🟢 " + t(144),
+  low:    "🫙 " + t(145),
 };
 export const PRIORITY_COLORS: Record<Priority, string> =
 {

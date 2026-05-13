@@ -179,14 +179,14 @@ export class KanbanView extends ItemView
       /* Columns */
       .mkb-columns { display: flex; gap: 12px; overflow-x: auto; flex: 1; padding-bottom: 8px; align-items: flex-start; }
       .mkb-column { min-width: 240px; max-width: 280px; flex-shrink: 0; background: var(--background-secondary); border-radius: 8px; padding: 8px; display: flex; flex-direction: column; gap: 6px; }
-      .mkb-column-header { display: flex; align-items: center; gap: 6px; border-top: 3px solid var(--color-accent); padding-top: 4px; }
+      .mkb-column-header { display: flex; align-items: center; gap: 6px; border-top: 3px solid var(--interactive-accent); padding-top: 4px; }
       .mkb-column-title { font-weight: 600; flex: 1; cursor: pointer; }
       .mkb-column-count { font-size: 0.75em; background: var(--background-modifier-border); border-radius: 10px; padding: 1px 6px; }
 
       /* Cards */
       .mkb-cards { display: flex; flex-direction: column; gap: 6px; min-height: 40px; }
       .mkb-cards.mkb-drag-over { background: var(--background-modifier-hover); border-radius: 6px; }
-      .mkb-card { background: var(--background-primary); border: 1px solid var(--background-modifier-border); border-left: 4px solid #888; border-radius: 6px; padding: 8px 10px; cursor: grab; display: flex; flex-direction: column; gap: 4px; transition: box-shadow 0.15s; }
+      .mkb-card { background: var(--background-primary); border: 1px solid var(--background-modifier-border); border-left: 4px solid var(--text-muted); border-radius: 6px; padding: 8px 10px; cursor: grab; display: flex; flex-direction: column; gap: 4px; transition: box-shadow 0.15s; }
       .mkb-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
       .mkb-card.mkb-dragging { opacity: 0.4; }
       .mkb-card-archived { cursor: default; opacity: 0.8; }
@@ -194,7 +194,7 @@ export class KanbanView extends ItemView
       .mkb-card-title { font-size: 0.9em; font-weight: 500; }
       .mkb-card-note-link { font-size: 0.78em; color: var(--link-color); text-decoration: none; cursor: pointer; }
       .mkb-card-due { font-size: 0.75em; color: var(--text-muted); }
-      .mkb-card-due.mkb-overdue { color: var(--color-red); }
+      .mkb-card-due.mkb-overdue { color: var(--text-error); }
       .mkb-card-tags { display: flex; flex-wrap: wrap; gap: 4px; }
       .mkb-tag { font-size: 0.7em; background: var(--tag-background); color: var(--tag-color); border-radius: 4px; padding: 1px 5px; }
       .mkb-card-actions { display: none; gap: 4px; justify-content: flex-end; margin-top: 2px; }
@@ -216,7 +216,7 @@ export class KanbanView extends ItemView
       .mkb-btn-add-card:hover { background: var(--background-modifier-hover); }
       .mkb-btn-icon { background: transparent; border: none; cursor: pointer; padding: 2px; color: var(--text-muted); }
       .mkb-btn-icon:hover { color: var(--text-normal); }
-      .mkb-btn-icon.mkb-danger:hover { color: var(--color-red); }
+      .mkb-btn-icon.mkb-danger:hover { color: var(--text-error); }
 
       /* Inputs */
       .mkb-inline-input { width: 100%; border: 1px solid var(--interactive-accent); border-radius: 4px; padding: 2px 6px; background: var(--background-primary); color: var(--text-normal); font-size: inherit; }
@@ -226,13 +226,13 @@ export class KanbanView extends ItemView
       .mkb-editor-modal, .mkb-prompt-box { background: var(--background-primary); border: 1px solid var(--background-modifier-border); border-radius: 10px; padding: 20px; min-width: 300px; display: flex; flex-direction: column; gap: 10px; }
       .mkb-editor-row { display: flex; flex-direction: column; gap: 4px; }
       .mkb-editor-row label { font-size: 0.8em; color: var(--text-muted); }
-      .mkb-editor-btns { display: flex; gap: 8px; justify-content: flex-end; margin-top: 8px; 
-      
+      .mkb-editor-btns { display: flex; gap: 8px; justify-content: flex-end; margin-top: 8px; }
+
       /* Column menu popup */
       .mkb-column-menu-popup { background: var(--background-primary); border: 1px solid var(--background-modifier-border); border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); display: flex; flex-direction: column; min-width: 160px; }
       .mkb-menu-item { background: transparent; border: none; text-align: left; padding: 8px 12px; cursor: pointer; color: var(--text-normal); font-size: 0.85em; transition: background 0.1s; }
       .mkb-menu-item:hover { background: var(--background-modifier-hover); }
-      .mkb-menu-item.mkb-menu-danger:hover { background: var(--color-red-rgb, rgba(229, 85, 85, 0.2)); color: var(--color-red); }
+      .mkb-menu-item.mkb-menu-danger:hover { background: var(--background-modifier-error); color: var(--text-error); }
     `;
     document.head.appendChild(style);
   }

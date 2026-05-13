@@ -1,7 +1,7 @@
 import { App, setIcon, Modal } from "obsidian";
 import type { KanbanBoardData, KanbanCard, KanbanColumn, Priority } from "./KanbanStore";
 import { KanbanStore, PRIORITY_ORDER, PRIORITY_LABELS, PRIORITY_COLORS } from "./KanbanStore";
-import { t, onLanguageChange } from "../../core/i18n";
+import { t } from "../../core/i18n";
 
 type SortOrder = "asc" | "desc" | null;
 
@@ -29,7 +29,6 @@ export class KanbanBoard
   {
     this.container.empty();
     this.container.addClass("mkb-board");
-
     this.renderHeader();
 
     const columnsEl = this.container.createDiv("mkb-columns");
@@ -83,7 +82,9 @@ export class KanbanBoard
   }
 
   private renderColumn(parent: HTMLElement, col: KanbanColumn): void {
-    const cards = this.getSortedCards(col.cards);
+    const rawCards = this.store.getCards(this.board.id, col.id);
+    const cards = this.getSortedCards(rawCards);
+    
     const colEl = parent.createDiv("mkb-column");
     colEl.dataset.colId = col.id;
 
@@ -177,14 +178,11 @@ export class KanbanBoard
 
   private renderArchivedSection(): void
   {
-    const allArchived: { card: KanbanCard; colId: string; colTitle: string }[] = [];
-    for (const col of this.board.columns)
+    const allArchived = this.store.getArchivedCards(this.board.id).map((card) =>
     {
-      for (const card of col.cards.filter(c => c.archived))
-      {
-        allArchived.push({ card, colId: col.id, colTitle: col.title });
-      }
-    }
+      const col = this.board.columns.find((c) => c.id === card.columnId);
+      return{ card, colId: card.columnId ?? "", colTitle: col?.title ?? "" };
+    });
 
     const section = this.container.createDiv("mkb-archive-section");
     section.createEl("h3", { text: t(123)+` (${allArchived.length})`, cls: "mkb-archive-title" });
@@ -222,15 +220,10 @@ export class KanbanBoard
   private onDrop(targetColId: string): void
   {
     if (!this.dragCard || !this.dragSourceColId || this.dragSourceColId === targetColId) return;
-    const srcCol = this.board.columns.find(c => c.id === this.dragSourceColId);
-    const dstCol = this.board.columns.find(c => c.id === targetColId);
-    if (!srcCol || !dstCol) return;
-    srcCol.cards = srcCol.cards.filter(c => c.id !== this.dragCard!.id);
-    dstCol.cards.push(this.dragCard);
+    const card = this.dragCard;
     this.dragCard = null;
     this.dragSourceColId = null;
-    this.persist();
-    this.render();
+    this.store.moveCard(card.id, targetColId).then(() => this.render());
   }
 
   //Board
@@ -259,8 +252,8 @@ export class KanbanBoard
   {
     const title = await this.promptInline(t(111));
     if (!title) return;
-    this.board.columns.push({ id: this.store.generateId("col"), title, cards: [] });
-    await this.persist();
+    this.board.columns.push({ id: this.store.generateId("col"), title });
+    await this.store.saveBoard(this.board);
     this.render();
   }
 
@@ -387,10 +380,7 @@ export class KanbanBoard
   {
     const title = await this.promptInline(t(140));
     if (!title) return;
-    const col = this.board.columns.find(c => c.id === colId);
-    if (!col) return;
-    col.cards.push({ id: this.store.generateId("card"), title, tags: [], priority: "normal", archived: false });
-    await this.persist();
+    await this.store.addCard(this.board.id, colId, title);
     this.render();
   }
 
@@ -407,14 +397,8 @@ export class KanbanBoard
       m.open();
     });
     if (!confirmed) return;
-    else
-    {
-      const col = this.board.columns.find(c => c.id === colId);
-      if (!col) return;
-      col.cards = col.cards.filter(c => c.id !== cardId);
-      await this.persist();
-      this.render();
-    }
+    await this.store.deleteCard(cardId);
+    this.render();
   }
 
   private async archiveCard(card: KanbanCard, colId: string): Promise<void>
