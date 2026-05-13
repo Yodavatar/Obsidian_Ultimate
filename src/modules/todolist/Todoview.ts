@@ -31,15 +31,16 @@ export class TodoView extends ItemView
     root.empty();
     root.addClass("utodo-view");
 
-    // Container central pour limiter la largeur et centrer
+    // Central container to limit the width and center
     const centralContainer = root.createDiv("utodo-central-container");
 
     centralContainer.createEl("h2", { text: t(300) || "Todo List", cls: "utodo-main-title" });
 
     const inputContainer = centralContainer.createDiv("utodo-input-container");
-    const input = inputContainer.createEl("input", { 
+    const input = inputContainer.createEl("input",
+    { 
       type: "text", 
-      placeholder: t(301) || "Ajouter une tâche..." 
+      placeholder: t(301) || t(302) 
     });
 
     input.onkeydown = async (e) =>
@@ -65,42 +66,47 @@ export class TodoView extends ItemView
         cls: `utodo-item ${task.done ? "is-done" : ""}`
       });
       
-      // --- LE BOUTON CHECK (RÉTABLI) ---
+      //check buttun
       const checkBtn = itemEl.createDiv("utodo-checkbox");
-      if (task.done) {
+      if (task.done)
+      {
         setIcon(checkBtn, "check");
         checkBtn.addClass("is-checked");
       }
-      checkBtn.onclick = async () => { 
+      checkBtn.onclick = async () =>
+      { 
         await this.store.toggleTask(task.id, !task.done); 
         this.render(); 
       };
 
-      // --- LE POINT DE PRIORITÉ ---
+      //secutity point
       const prioWrapper = itemEl.createDiv("utodo-prio-wrapper");
       const dot = prioWrapper.createDiv("utodo-prio-dot");
       dot.style.backgroundColor = PRIORITY_COLORS[task.priority] || "#ccc";
 
-      prioWrapper.onmousedown = (e) => {
+      prioWrapper.onmousedown = (e) =>
+      {
         e.preventDefault();
         e.stopPropagation();
         this.openRadialMenu(e, task.id);
       };
 
-      // --- LE TITRE ---
+      //title
       itemEl.createDiv({ text: task.title, cls: "utodo-title" });
 
-      // --- LE BOUTON DELETE ---
+      //delete button
       const del = itemEl.createDiv("utodo-action-del");
       setIcon(del, "trash");
-      del.onclick = async () => { 
+      del.onclick = async () =>
+      { 
         await this.store.deleteTask(task.id); 
         this.render(); 
       };
     });
   }
 
-  private openRadialMenu(e: MouseEvent, taskId: string) {
+  private openRadialMenu(e: MouseEvent, taskId: string)
+  {
     this.closeMenu();
     const menu = document.body.createDiv("utodo-radial-container");
     this.activeMenu = menu;
@@ -108,7 +114,8 @@ export class TodoView extends ItemView
     menu.style.top = `${e.clientY}px`;
     const radius = 80; 
 
-    PRIORITY_ORDER.forEach((prio, index) => {
+    PRIORITY_ORDER.forEach((prio, index) =>
+    {
       const angle = (index * (360 / PRIORITY_ORDER.length) - 90) * (Math.PI / 180);
       const x = Math.cos(angle) * radius;
       const y = Math.sin(angle) * radius;
@@ -118,7 +125,8 @@ export class TodoView extends ItemView
       const labelText = this.labels[prio] || prio;
       btn.createSpan({ text: labelText });
 
-      btn.onmouseup = async (ev) => {
+      btn.onmouseup = async (ev) =>
+      {
         ev.stopPropagation();
         await this.store.updateTaskPriority(taskId, prio);
         this.closeMenu();
@@ -128,21 +136,25 @@ export class TodoView extends ItemView
       btn.onmouseleave = () => btn.removeClass("is-hovered");
     });
 
-    const onGlobalMouseUp = () => {
+    const onGlobalMouseUp = () =>
+    {
       setTimeout(() => this.closeMenu(), 50);
       window.removeEventListener("mouseup", onGlobalMouseUp);
     };
     window.addEventListener("mouseup", onGlobalMouseUp);
   }
 
-  private closeMenu() {
-    if (this.activeMenu) {
+  private closeMenu()
+  {
+    if (this.activeMenu)
+    {
       this.activeMenu.remove();
       this.activeMenu = null;
     }
   }
 
-  private injectStyles() {
+  private injectStyles()
+  {
     const styleId = "utodo-radial-styles";
     document.getElementById(styleId)?.remove();
 

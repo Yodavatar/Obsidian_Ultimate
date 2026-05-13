@@ -122,7 +122,8 @@ const EN: Record<number, string> =
 
   //To-Do List
   300: "My Tasks",
-  301: "New Task..."
+  301: "New Task...",
+  302: "Add a task...",
 };
 
 //French dictionary
@@ -240,7 +241,8 @@ const FR: Partial<Record<number, string>> =
 
   //Todo list
   300: "Mes Tâches",
-  301: "Nouvelle tâche..."
+  301: "Nouvelle tâche...",
+  302: "Ajouter une tâche...",
 
 };
 
