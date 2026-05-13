@@ -56,7 +56,8 @@ __**3 - Minimalist Todo List**__
 
 A simple to-do list organized by priority.<br>
 
-<img width="640" height="375" alt="image" src="https://github.com/user-attachments/assets/39ce8cd3-bd6c-4ceb-b193-d64191339141" />
+<img width="640" height="375" alt="image" src="https://github.com/user-attachments/assets/2f3959ae-9ffd-4040-95ea-fb914ce5c560" />
+
 
 - create a quick task
 - Change priority / delete
@@ -66,7 +67,8 @@ __**4 - Activated/Desactivated module**__
 
 Enable or disable the module you need, in the Harmony settings.<br>
 
-<img width="471.5" height="451" alt="image" src="https://github.com/user-attachments/assets/237181cf-248d-4817-a26e-484bad7717c0" />
+<img width="472" height="451" alt="Capture d&#39;écran 2026-05-13 141255" src="https://github.com/user-attachments/assets/f8b2cde6-90e2-41f8-af97-dad43a9356c3" />
+
 
 
 ## Installation
