@@ -1,7 +1,7 @@
 {
   "id": "obsidian-ultimate",
   "name": "Obsidian Ultimate",
-  "version": "0.1.0",
+  "version": "0.1.5",
   "minAppVersion": "1.4.0",
   "description": "All-in-one modular plugin for Obsidian.",
   "author": "Yodavatar",
