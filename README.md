@@ -65,7 +65,8 @@ A simple to-do list organized by priority.<br>
 __**4 - Activated/Desactivated module**__
 
 Enable or disable the module you need, in the Ultimate Obsidian settings.<br>
-<img width="415" height="320" alt="image" src="https://github.com/user-attachments/assets/faab3fca-f022-43d5-a7a9-27b03a7f1cd1" />
+
+<img width="471.5" height="451" alt="image" src="https://github.com/user-attachments/assets/237181cf-248d-4817-a26e-484bad7717c0" />
 
 
 ## Installation
