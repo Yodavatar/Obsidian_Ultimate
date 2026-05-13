@@ -1,6 +1,6 @@
 import { App, setIcon, Modal } from "obsidian";
-import type { KanbanBoardData, KanbanCard, KanbanColumn, Priority } from "./KanbanStore";
-import { KanbanStore, PRIORITY_ORDER, PRIORITY_LABELS, PRIORITY_COLORS } from "./KanbanStore";
+import type { KanbanBoardData, KanbanCard, KanbanColumn, KanbanStore } from "./KanbanStore";
+import { PRIORITY_ORDER, PRIORITY_COLORS, getPriorityLabels, Priority } from "../../shared/taskstore";
 import { t } from "../../core/i18n";
 
 type SortOrder = "asc" | "desc" | null;
@@ -27,6 +27,7 @@ export class KanbanBoard
 
   render(): void
   {
+    const labels = getPriorityLabels();//each render we get the language
     this.container.empty();
     this.container.addClass("mkb-board");
     this.renderHeader();
@@ -34,11 +35,11 @@ export class KanbanBoard
     const columnsEl = this.container.createDiv("mkb-columns");
     for (const col of this.board.columns)
     {
-      this.renderColumn(columnsEl, col);
+      this.renderColumn(columnsEl, col, labels);
     }
     if (this.showArchived)
     {
-      this.renderArchivedSection();
+      this.renderArchivedSection(labels);
     }
   }
 
@@ -81,7 +82,8 @@ export class KanbanBoard
     });
   }
 
-  private renderColumn(parent: HTMLElement, col: KanbanColumn): void {
+  private renderColumn(parent: HTMLElement, col: KanbanColumn, labels:Record<Priority, string>): void
+  {
     const rawCards = this.store.getCards(this.board.id, col.id);
     const cards = this.getSortedCards(rawCards);
     
@@ -107,14 +109,14 @@ export class KanbanBoard
 
     for (const card of cards)
     {
-      this.renderCard(cardsEl, card, col.id);
+      this.renderCard(cardsEl, card, col.id, labels);
     }
 
     const addCardBtn = colEl.createEl("button", { cls: "mkb-btn mkb-btn-add-card", text: t(108) });
     addCardBtn.addEventListener("click", () => this.addCard(col.id));
   }
 
-  private renderCard(parent: HTMLElement, card: KanbanCard, colId: string): void
+  private renderCard(parent: HTMLElement, card: KanbanCard, colId: string, labels:Record<Priority, string>): void
   {
     const cardEl = parent.createDiv("mkb-card");
     cardEl.draggable = true;
@@ -127,7 +129,7 @@ export class KanbanBoard
     cardEl.addEventListener("dragend", () => cardEl.removeClass("mkb-dragging"));
 
     // Badge priorité
-    const badge = cardEl.createEl("span", { text: PRIORITY_LABELS[priority], cls: "mkb-priority-badge" });
+    const badge = cardEl.createEl("span", { text: labels[priority], cls: "mkb-priority-badge" });
     badge.style.color = PRIORITY_COLORS[priority];
 
     const titleEl = cardEl.createEl("span", { text: card.title, cls: "mkb-card-title" });
@@ -137,10 +139,10 @@ export class KanbanBoard
     {
       const linkEl = cardEl.createEl("a", { text: `📄 ${card.noteLink}`, cls: "mkb-card-note-link" });
       linkEl.addEventListener("click", (e) =>
-        {
-          e.preventDefault();
-          this.app.workspace.openLinkText(card.noteLink!, "", false);
-        });
+      {
+        e.preventDefault();
+        this.app.workspace.openLinkText(card.noteLink!, "", false);
+      });
     }
 
     if (card.dueDate) {
@@ -165,7 +167,7 @@ export class KanbanBoard
 
     const editBtn = actions.createEl("button", { cls: "mkb-btn-icon" });
     setIcon(editBtn, "pencil");
-    editBtn.addEventListener("click", () => this.openCardEditor(card, colId));
+    editBtn.addEventListener("click", () => this.openCardEditor(card, colId,labels));
 
     const archiveBtn = actions.createEl("button", { cls: "mkb-btn-icon", title: t(120) });
     setIcon(archiveBtn, "archive");
@@ -176,7 +178,7 @@ export class KanbanBoard
     delBtn.addEventListener("click", () => this.deleteCard(card.id, colId));
   }
 
-  private renderArchivedSection(): void
+  private renderArchivedSection(labels:Record<Priority, string>): void
   {
     const allArchived = this.store.getArchivedCards(this.board.id).map((card) =>
     {
@@ -199,7 +201,7 @@ export class KanbanBoard
       const priority = card.priority ?? "normal";
       cardEl.style.borderLeftColor = PRIORITY_COLORS[priority];
 
-      cardEl.createEl("span", { text: PRIORITY_LABELS[priority], cls: "mkb-priority-badge" }).style.color = PRIORITY_COLORS[priority];
+      cardEl.createEl("span", { text: labels[priority], cls: "mkb-priority-badge" }).style.color = PRIORITY_COLORS[priority];
       cardEl.createEl("span", { text: card.title, cls: "mkb-card-title" });
       cardEl.createEl("span", { text: `← ${colTitle}`, cls: "mkb-card-due" });
 
@@ -428,7 +430,7 @@ export class KanbanBoard
     input.addEventListener("keydown", (e) => { if (e.key === "Enter") input.blur(); if (e.key === "Escape") this.render(); });
   }
 
-  private openCardEditor(card: KanbanCard, colId: string): void
+  private openCardEditor(card: KanbanCard, colId: string, labels:Record<Priority, string>): void
   {
     const overlay = this.container.createDiv("mkb-editor-overlay");
     const modal = overlay.createDiv("mkb-editor-modal");
@@ -452,7 +454,7 @@ export class KanbanBoard
     priorityRow.createEl("label", { text: t(117) });
     const select = priorityRow.createEl("select", { cls: "mkb-select" });
     for (const p of PRIORITY_ORDER) {
-      const opt = select.createEl("option", { text: PRIORITY_LABELS[p], value: p });
+      const opt = select.createEl("option", { text: labels[p], value: p });
       if (p === (card.priority ?? "normal")) opt.selected = true;
     }
     select.addEventListener("change", () => { card.priority = select.value as Priority; });

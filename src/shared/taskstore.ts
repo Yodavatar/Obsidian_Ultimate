@@ -198,13 +198,16 @@ export class TaskStore
 //shared constants
 
 export const PRIORITY_ORDER: Priority[] = ["urgent", "high", "normal", "low"];
-export const PRIORITY_LABELS: Record<Priority, string> =
-{
+
+export const getPriorityLabels = (): Record<Priority, string> => ({
   urgent: "🔴 " + t(142),
   high:   "🟠 " + t(143),
   normal: "🟢 " + t(144),
   low:    "🫙 " + t(145),
-};
+});
+
+
+
 export const PRIORITY_COLORS: Record<Priority, string> =
 {
   urgent: "#e55",

@@ -98,6 +98,7 @@ const EN: Record<number, string> =
   218: "Link name",
   219: "Note path",
   220: "Add link",
+  221: "Priority Tasks",
   //for time
   250: "Monday",
   251: "Tuesday",
@@ -118,6 +119,10 @@ const EN: Record<number, string> =
   266: "October",
   267: "November",
   268: "December",
+
+  //To-Do List
+  300: "My Tasks",
+  301: "New Task..."
 };
 
 //French dictionary
@@ -211,6 +216,7 @@ const FR: Partial<Record<number, string>> =
   218: "Nom du lien",
   219: "Chemin de la note",
   220: "Ajouter le lien",
+  221: "Tâches Prioritaires",
   //for time
   250: "Lundi",
   251: "Mardi",
@@ -231,6 +237,11 @@ const FR: Partial<Record<number, string>> =
   266: "octobre",
   267: "novembre",
   268: "decembre",
+
+  //Todo list
+  300: "Mes Tâches",
+  301: "Nouvelle tâche..."
+
 };
 
 //Language Registry

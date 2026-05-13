@@ -1,4 +1,4 @@
-import { PRIORITY_ORDER, PRIORITY_COLORS, PRIORITY_LABELS, TaskStore } from "../../shared/taskstore";
+import { PRIORITY_COLORS, PRIORITY_ORDER, getPriorityLabels, Priority, TaskStore } from "../../shared/taskstore";
 import { ItemView, WorkspaceLeaf, FileSystemAdapter, TFile } from "obsidian";
 import type { DashboardSettings } from "./DashboardSettings";
 import type { DashboardModule } from "./DashboardModule";
@@ -55,6 +55,7 @@ export class DashboardView extends ItemView
 
   render(): void
   {
+    const labels = getPriorityLabels();
     if (this.clockInterval) { window.clearInterval(this.clockInterval); this.clockInterval = null; }
     const root = this.containerEl.children[1] as HTMLElement;
     root.empty();
@@ -73,11 +74,11 @@ export class DashboardView extends ItemView
 
     if (this.s.showClock) this.renderClock(center);
     this.renderSearch(center);
-    this.renderTasks(center);
+    this.renderTasks(center,labels);
   }
 
   //Get tasks
-  private renderTasks(parent: HTMLElement): void
+  private renderTasks(parent: HTMLElement, labels: Record<Priority, string>): void
   {
     const tasks = this.module.taskstore.getTasks({ done: false, archived: false });
   
@@ -96,7 +97,7 @@ export class DashboardView extends ItemView
     if (urgentTasks.length === 0) return;
   
     const tasksContainer = parent.createDiv("dash-tasks-container"); 
-    tasksContainer.createEl("h4", { text: "Tâches urgentes", cls: "dash-section-title" });
+    tasksContainer.createEl("h4", { text: t(221), cls: "dash-section-title" });
     const tasksGrid = tasksContainer.createDiv("dash-tasks-horizontal");
 
     for (const task of urgentTasks)
@@ -106,10 +107,11 @@ export class DashboardView extends ItemView
       const prioritySpan = header.createSpan(
       {
         cls: "dash-task-priority",
-        text: PRIORITY_LABELS[task.priority],
+        text: labels[task.priority],
       });
       prioritySpan.style.color = PRIORITY_COLORS[task.priority];
 
+      /*
       const checkbox = header.createEl("input", { type: "checkbox" });
       checkbox.checked = task.done ?? false;
       checkbox.addEventListener("change", async (e) =>
@@ -117,6 +119,7 @@ export class DashboardView extends ItemView
         e.stopPropagation();
         await this.module.taskstore.updateTask(task.id, { done: checkbox.checked });
       });
+      */
 
       taskCard.createDiv({ text: task.title, cls: "dash-task-title" });
       const footer = taskCard.createDiv("dash-card-footer");
@@ -131,13 +134,16 @@ export class DashboardView extends ItemView
         });
       }
 
+      /*
       const deleteBtn = footer.createEl("button", { cls: "dash-btn-icon", text: "🗑" });
       deleteBtn.addEventListener("click", async (e) =>
       {
         e.stopPropagation();
         await this.module.taskstore.deleteTask(task.id);
       });
+      */
 
+      /*
       if (task.noteLink)
       {
         taskCard.addEventListener("click", (e) =>
@@ -147,6 +153,7 @@ export class DashboardView extends ItemView
           if (file instanceof TFile) this.leaf.openFile(file);
         });
       }
+      */
     }
   }
 
@@ -357,7 +364,7 @@ export class DashboardView extends ItemView
     return overlay;
   }
 
-  // ── Styles ─────────────────────────────────────────────────────────────────
+  //Styles
   private injectStyles(): void
   {
     const id = "obsidian_ultimate_dashboard_styles";

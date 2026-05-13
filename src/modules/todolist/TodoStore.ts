@@ -1,5 +1,4 @@
-import { App } from "obsidian";
-import type { TaskStore, Task } from "../../shared/taskstore";
+import { TaskStore, Task, Priority, PRIORITY_ORDER} from "../../shared/taskstore";
 
 export class TodoStore
 {
@@ -25,6 +24,11 @@ export class TodoStore
     });
   }
 
+  async updateTaskPriority(id: string, priority: Priority): Promise<void>
+  {
+    await this.taskStore.updateTask(id, { priority });
+  }
+
   async toggleTask(id: string, done: boolean): Promise<void>
   {
     await this.taskStore.updateTask(id, { done });
@@ -33,5 +37,14 @@ export class TodoStore
   async deleteTask(id: string): Promise<void>
   {
     await this.taskStore.deleteTask(id);
+  }
+
+  async cyclePriority(id: string, current: Priority): Promise<void>
+  {
+    const currentIndex = PRIORITY_ORDER.indexOf(current);
+    const nextIndex = (currentIndex + 1) % PRIORITY_ORDER.length;
+    const nextPriority = PRIORITY_ORDER[nextIndex];
+    
+    await this.taskStore.updateTask(id, { priority: nextPriority });
   }
 }

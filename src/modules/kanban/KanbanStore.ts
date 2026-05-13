@@ -2,8 +2,6 @@ import { App, normalizePath, Modal} from "obsidian";
 import { t } from "../../core/i18n";
 import type { TaskStore, Task, Priority } from "../../shared/taskstore";
 
-export type {Priority};
-
 export type KanbanCard = Task;
 
 export interface KanbanColumn {
@@ -21,22 +19,6 @@ export interface KanbanBoardData {
 }
 
 const DATA_DIR = normalizePath(".obsidian_ultimate/kanban");
-
-export const PRIORITY_ORDER: Priority[] = ["urgent", "high", "normal", "low"];
-
-export const PRIORITY_LABELS: Record<Priority, string> = {
-  urgent: "🔴 " + t(142),
-  high:   "🟠 " + t(143),
-  normal: "🟢 " + t(144),
-  low:    "🫙 " + t(145),
-};
-
-export const PRIORITY_COLORS: Record<Priority, string> = {
-  urgent: "#e55",
-  high:   "#e96f00",
-  normal: "#3a3",
-  low:    "#888",
-};
 
 export class KanbanStore
 {
