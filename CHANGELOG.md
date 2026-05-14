@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.7] - 2026-05-15
+
+### Fixed
+- Plugin Lifecycle
+- API Compatibility:
+- View Registration:
+
+### Changed
+- Internal Architecture
+
 ## [0.1.6] - 2026-05-14
 
 ### Changed
@@ -24,5 +34,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 [Unreleased]: https://github.com/Yodavatar/Harmony/compare/0.1.6...HEAD
+[0.1.6]: https://github.com/Yodavatar/Harmony/compare/0.1.6...0.1.7
 [0.1.6]: https://github.com/Yodavatar/Harmony/compare/0.1.5...0.1.6
 [0.1.5]: https://github.com/Yodavatar/Harmony/releases/tag/0.1.5
