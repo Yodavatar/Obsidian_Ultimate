@@ -11,8 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Plugin Lifecycle
-- API Compatibility:
-- View Registration:
+- API Compatibility
+- View Registration
 
 ### Changed
 - Internal Architecture
