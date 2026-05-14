@@ -102,13 +102,14 @@ export class TodoView extends ItemView
   private openRadialMenu(e: MouseEvent, taskId: string)
   {
     this.closeMenu();
-    // FIX: Utilisation de activeDocument pour la compatibilité avec les fenêtres popout
+    // FIX
     const menu = activeDocument.body.createDiv("utodo-radial-container");
     this.activeMenu = menu;
     
-    menu.setCssProps({
-        "left": `${e.clientX}px`,
-        "top": `${e.clientY}px`
+    menu.setCssProps(
+    {
+      "left": `${e.clientX}px`,
+      "top": `${e.clientY}px`
     });
     
     const radius = 80; 
@@ -119,10 +120,8 @@ export class TodoView extends ItemView
       const x = Math.cos(angle) * radius;
       const y = Math.sin(angle) * radius;
       const btn = menu.createDiv("utodo-radial-btn");
-      btn.setCssProps({
-          "background-color": PRIORITY_COLORS[prio],
-          "transform": `translate(${x}px, ${y}px)`
-      });
+      btn.style.backgroundColor = PRIORITY_COLORS[prio];
+      btn.style.transform = `translate(${x}px, ${y}px)`;
       
       const labelText = this.labels[prio] || prio;
       btn.createSpan({ text: labelText });
@@ -130,7 +129,8 @@ export class TodoView extends ItemView
       btn.addEventListener("mouseup", (ev) =>
       {
         ev.stopPropagation();
-        void (async () => {
+        void (async () =>
+        {
           await this.store.updateTaskPriority(taskId, prio);
           this.closeMenu();
           await this.render();
@@ -143,7 +143,7 @@ export class TodoView extends ItemView
 
     const onGlobalMouseUp = () =>
     {
-      // FIX: window.setTimeout pour compatibilité
+      // FIX: window.setTimeout
       window.setTimeout(() => this.closeMenu(), 50);
       activeDocument.removeEventListener("mouseup", onGlobalMouseUp);
     };
