@@ -1,4 +1,3 @@
-//Necessary modules
 import { Plugin } from "obsidian";
 import { ModuleRegistry } from "./core/ModuleRegistry";
 import { Harmony_Settings_Tab } from "./core/SettingsTab";
@@ -6,7 +5,6 @@ import { setLanguage } from "./core/i18n";
 import { TaskStore } from "./shared/taskstore";
 import { DEFAULT_SETTINGS, type Harmony_Settings } from "./shared/types";
 
-//All modules one in all
 import { KanbanModule } from "./modules/kanban/KanbanModule";
 import { DashboardModule } from "./modules/dashboard/DashboardModule";
 import { TodoModule } from "./modules/todolist/TodoModule";
@@ -18,15 +16,20 @@ export default class Harmony extends Plugin
   taskStore: TaskStore;
 
   async onload() {
-    console.log("[Harmony] Load...");
+    console.log("[Harmony] Début du chargement...");
+
     await this.loadSettings();
     setLanguage(this.settings.language);
 
     this.registry = new ModuleRegistry();
     this.taskStore = new TaskStore(this.app);
-    await this.taskStore.load();//Sure that the taskstore is ready
 
-    //All modules one in all
+    try {
+      await this.taskStore.load();
+    } catch (e) {
+      console.error("[Harmony] Erreur lors du chargement du TaskStore :", e);
+    }
+
     this.registry.register(new DashboardModule(this.app, this, this.taskStore));
     this.registry.register(new KanbanModule(this.app, this, this.taskStore));
     this.registry.register(new TodoModule(this.app, this, this.taskStore));
@@ -35,17 +38,28 @@ export default class Harmony extends Plugin
     {
       if (enabled)
       {
-        await this.registry.enable(moduleId);
+        try
+        {
+          await this.registry.enable(moduleId);
+        } catch (e)
+        {
+          console.error(`[Harmony] Impossible d'activer le module ${moduleId} :`, e);
+        }
       }
     }
+
     this.addSettingTab(new Harmony_Settings_Tab(this.app, this));
-    console.log("[Harmony] Ready !");
+
+    console.log("[Harmony] Plugin prêt.");
   }
 
   onunload()
   {
-    console.log("[Harmony] Unload...");
-    this.registry.unloadAll();
+    console.log("[Harmony] Déchargement du plugin...");
+    if (this.registry)
+    {
+      this.registry.unloadAll();
+    }
   }
 
   async loadSettings()

@@ -28,6 +28,7 @@ export class ModuleRegistry
     if (this.activeModules.has(moduleId)) return;
 
     await module.onload();
+    
     this.activeModules.add(moduleId);
 
     console.log(`[Harmony] Module "${moduleId}" activé.`);
@@ -45,10 +46,12 @@ export class ModuleRegistry
 
   unloadAll(): void
   {
-    for (const id of this.activeModules)
+    const activeIds = Array.from(this.activeModules);
+    for (const id of activeIds)
     {
       this.disable(id);
     }
+    console.log("[Harmony] All modules are unload");
   }
 
   isActive(moduleId: string): boolean

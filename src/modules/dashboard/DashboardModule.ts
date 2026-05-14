@@ -1,11 +1,10 @@
-import { App } from "obsidian";
+import { App, EventRef } from "obsidian";
 import type Harmony from "../../main";
 import type { IModule } from "../../shared/types";
 import { DashboardView, DASHBOARD_VIEW_TYPE } from "./DashboardView";
 import { DEFAULT_DASHBOARD_SETTINGS, type DashboardSettings } from "./DashboardSettings";
 import { t, onLanguageChange } from "../../core/i18n";
 import { TaskStore } from "../../shared/taskstore";
-
 
 export class DashboardModule implements IModule
 {
@@ -17,6 +16,7 @@ export class DashboardModule implements IModule
   public taskstore: TaskStore;
   private settings: DashboardSettings;
   private unsubLang?: () => void;
+  private layoutEventRef: EventRef | null = null;
 
   constructor(app: App, plugin: Harmony, taskstore:TaskStore )
   {
@@ -43,10 +43,14 @@ export class DashboardModule implements IModule
 
   async onload(): Promise<void>
   {
-    this.plugin.registerView(
-      DASHBOARD_VIEW_TYPE,
-      (leaf) => new DashboardView(leaf, this, this.taskstore)
-    );
+  // @ts-ignore
+    if (!this.app.viewRegistry.viewByType[DASHBOARD_VIEW_TYPE])
+    {
+      this.plugin.registerView(
+          DASHBOARD_VIEW_TYPE,
+          (leaf) => new DashboardView(leaf, this, this.taskstore)
+      );
+    }
 
     this.unsubLang = onLanguageChange(() =>
     {
@@ -62,15 +66,19 @@ export class DashboardModule implements IModule
     });
 
     //replace the new tab
-    this.plugin.registerEvent(
-      this.app.workspace.on("layout-change", () =>
+    this.layoutEventRef = this.app.workspace.on("layout-change", () =>
+    {
+      const emptyLeaves = this.app.workspace.getLeavesOfType("empty");
+      for (const leaf of emptyLeaves)
       {
-        const emptyLeaves = this.app.workspace.getLeavesOfType("empty");
-        for (const leaf of emptyLeaves) {
-          leaf.setViewState({ type: DASHBOARD_VIEW_TYPE, active: false });
-        }
-      })
-    );
+        leaf.setViewState({ type: DASHBOARD_VIEW_TYPE, active: false });
+      }
+    });
+
+    if (this.layoutEventRef)
+    {
+      this.plugin.registerEvent(this.layoutEventRef);
+    }
 
     if (this.settings.openOnStartup)
     {
@@ -83,6 +91,13 @@ export class DashboardModule implements IModule
   onunload(): void
   {
     this.unsubLang?.();
+
+    if (this.layoutEventRef)
+    {
+      this.app.workspace.offref(this.layoutEventRef);
+      this.layoutEventRef = null;
+    }
+
     this.app.workspace.detachLeavesOfType(DASHBOARD_VIEW_TYPE);
     console.log("[DashboardModule] Désactivé.");
   }

@@ -259,7 +259,7 @@ const TRANSLATIONS: Record<Language, Partial<Record<number, string>>> =
 let currentLanguage: Language = "en";
 const changeListeners: (() => void)[] = [];
 
-// ─── API publique ─────────────────────────────────────────────────────────────
+//api public
 
 /**
  * Translates a key into the current language.
@@ -270,7 +270,6 @@ export function t(key: number): string
 {
   return TRANSLATIONS[currentLanguage][key] ?? EN[key] ?? `[${key}]`;
 }
-
 
 export function setLanguage(lang: Language): void
 {
