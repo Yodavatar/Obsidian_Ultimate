@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.1.6] - 2026-05-13
+## [0.1.6] - 2026-05-14
 
 ### Changed
 - Renamed project from "Obsidian Ultimate" to "Harmony" to comply with Obsidian plugin policies
@@ -21,3 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dashboard: wallpaper, searchbar, urgent task widget
 - Kanban: multiple boards, columns, task archiving and sorting
 - Todo List: add, check, sort, and delete tasks
+
+---
+[Unreleased]: https://github.com/Yodavatar/Harmony/compare/0.1.6...HEAD
+[0.1.6]: https://github.com/Yodavatar/Harmony/compare/0.1.5...0.1.6
+[0.1.5]: https://github.com/Yodavatar/Harmony/releases/tag/0.1.5
