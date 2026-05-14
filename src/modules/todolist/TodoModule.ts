@@ -40,24 +40,22 @@ export class TodoModule implements IModule
       const leaves = this.app.workspace.getLeavesOfType(TODO_VIEW_TYPE);
       for (const leaf of leaves)
       {
-        (leaf.view as TodoView).render();
+        void (leaf.view as TodoView).render();
       }
     });
 
-    this.ribbonIconEl = this.plugin.addRibbonIcon("check-check", "Todo List", () => this.activateView());
+    this.ribbonIconEl = this.plugin.addRibbonIcon("check-check", "Todo List", () => void this.activateView());
     console.log("[TodoModule] Activé.");
   }
 
   onunload(): void
   {
     this.unsubLang?.();
-    this.app.workspace.detachLeavesOfType(TODO_VIEW_TYPE);
+    // FIX: Suppression de detachLeavesOfType
     
     if (this.ribbonIconEl)
     {
       this.ribbonIconEl.remove();
-      //this.ribbonIconEl = null;
-      console.log("delete todo logo")
     }
 
     console.log("[TodoModule] Désactivé.");

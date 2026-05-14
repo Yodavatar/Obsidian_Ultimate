@@ -25,9 +25,14 @@ export class KanbanBoard
     this.container = container;
   }
 
+  private async persist(): Promise<void>
+  {
+    await this.store.saveBoard(this.board);
+  }
+
   render(): void
   {
-    const labels = getPriorityLabels();//each render we get the language
+    const labels = getPriorityLabels();
     this.container.empty();
     this.container.addClass("mkb-board");
     this.renderHeader();
@@ -48,7 +53,7 @@ export class KanbanBoard
     const header = this.container.createDiv("mkb-board-header");
 
     const titleEl = header.createEl("h2", { text: this.board.title, cls: "mkb-board-title" });
-    titleEl.addEventListener("dblclick", () => this.editBoardTitle(titleEl));
+    titleEl.addEventListener("dblclick", () => void this.editBoardTitle(titleEl));
 
     const actions = header.createDiv("mkb-header-actions");
 
@@ -67,7 +72,7 @@ export class KanbanBoard
     });
 
     const addColBtn = actions.createEl("button", { cls: "mkb-btn mkb-btn-secondary", text: t(110) });
-    addColBtn.addEventListener("click", () => this.addColumn());
+    addColBtn.addEventListener("click", () => void this.addColumn());
   }
 
   private getSortedCards(cards: KanbanCard[]): KanbanCard[]
@@ -91,10 +96,10 @@ export class KanbanBoard
     colEl.dataset.colId = col.id;
 
     const colHeader = colEl.createDiv("mkb-column-header");
-    if (col.color) colHeader.style.borderTopColor = col.color;
+    if (col.color) colHeader.setCssProps({"border-top-color": col.color});
 
     const titleEl = colHeader.createEl("span", { text: col.title, cls: "mkb-column-title" });
-    titleEl.addEventListener("dblclick", () => this.editColumnTitle(titleEl, col));
+    titleEl.addEventListener("dblclick", () => void this.editColumnTitle(titleEl, col));
 
     colHeader.createEl("span", { text: String(cards.length), cls: "mkb-column-count" });
 
@@ -113,7 +118,7 @@ export class KanbanBoard
     }
 
     const addCardBtn = colEl.createEl("button", { cls: "mkb-btn mkb-btn-add-card", text: t(108) });
-    addCardBtn.addEventListener("click", () => this.addCard(col.id));
+    addCardBtn.addEventListener("click", () => void this.addCard(col.id));
   }
 
   private renderCard(parent: HTMLElement, card: KanbanCard, colId: string, labels:Record<Priority, string>): void
@@ -123,17 +128,16 @@ export class KanbanBoard
     cardEl.dataset.cardId = card.id;
 
     const priority = card.priority ?? "normal";
-    cardEl.style.borderLeftColor = PRIORITY_COLORS[priority];
+    cardEl.setCssProps({"border-left-color": PRIORITY_COLORS[priority]});
 
     cardEl.addEventListener("dragstart", () => { this.dragCard = card; this.dragSourceColId = colId; cardEl.addClass("mkb-dragging"); });
     cardEl.addEventListener("dragend", () => cardEl.removeClass("mkb-dragging"));
 
-    // Badge priorité
     const badge = cardEl.createEl("span", { text: labels[priority], cls: "mkb-priority-badge" });
-    badge.style.color = PRIORITY_COLORS[priority];
+    badge.setCssProps({"color": PRIORITY_COLORS[priority]});
 
     const titleEl = cardEl.createEl("span", { text: card.title, cls: "mkb-card-title" });
-    titleEl.addEventListener("dblclick", () => this.editCardTitle(titleEl, card, colId));
+    titleEl.addEventListener("dblclick", () => void this.editCardTitle(titleEl, card, colId));
 
     if (card.noteLink)
     {
@@ -141,7 +145,7 @@ export class KanbanBoard
       linkEl.addEventListener("click", (e) =>
       {
         e.preventDefault();
-        this.app.workspace.openLinkText(card.noteLink!, "", false);
+        void this.app.workspace.openLinkText(card.noteLink!, "", false);
       });
     }
 
@@ -171,11 +175,11 @@ export class KanbanBoard
 
     const archiveBtn = actions.createEl("button", { cls: "mkb-btn-icon", title: t(120) });
     setIcon(archiveBtn, "archive");
-    archiveBtn.addEventListener("click", () => this.archiveCard(card, colId));
+    archiveBtn.addEventListener("click", () => void this.archiveCard(card, colId));
 
     const delBtn = actions.createEl("button", { cls: "mkb-btn-icon mkb-danger" });
     setIcon(delBtn, "trash");
-    delBtn.addEventListener("click", () => this.deleteCard(card.id, colId));
+    delBtn.addEventListener("click", () => void this.deleteCard(card.id, colId));
   }
 
   private renderArchivedSection(labels:Record<Priority, string>): void
@@ -199,25 +203,24 @@ export class KanbanBoard
     {
       const cardEl = grid.createDiv("mkb-card mkb-card-archived");
       const priority = card.priority ?? "normal";
-      cardEl.style.borderLeftColor = PRIORITY_COLORS[priority];
+      cardEl.setCssProps({"border-left-color": PRIORITY_COLORS[priority]});
 
-      cardEl.createEl("span", { text: labels[priority], cls: "mkb-priority-badge" }).style.color = PRIORITY_COLORS[priority];
+      const badge = cardEl.createEl("span", { text: labels[priority], cls: "mkb-priority-badge" });
+      badge.setCssProps({"color": PRIORITY_COLORS[priority]});
+      
       cardEl.createEl("span", { text: card.title, cls: "mkb-card-title" });
       cardEl.createEl("span", { text: `← ${colTitle}`, cls: "mkb-card-due" });
 
-      const actions = cardEl.createDiv("mkb-card-actions");
-      actions.style.display = "flex";
+      const actions = cardEl.createDiv("mkb-card-actions mkb-actions-visible");
 
       const restoreBtn = actions.createEl("button", { cls: "mkb-btn mkb-btn-secondary", text: t(121) });
-      restoreBtn.addEventListener("click", () => this.unarchiveCard(card, colId));
+      restoreBtn.addEventListener("click", () => void this.unarchiveCard(card, colId));
 
       const delBtn = actions.createEl("button", { cls: "mkb-btn-icon mkb-danger" });
       setIcon(delBtn, "trash");
-      delBtn.addEventListener("click", () => this.deleteCard(card.id, colId));
+      delBtn.addEventListener("click", () => void this.deleteCard(card.id, colId));
     }
   }
-
-  //Drag & Drop
 
   private onDrop(targetColId: string): void
   {
@@ -225,13 +228,11 @@ export class KanbanBoard
     const card = this.dragCard;
     this.dragCard = null;
     this.dragSourceColId = null;
-    this.store.moveCard(card.id, targetColId).then(() => this.render());
+    void this.store.moveCard(card.id, targetColId).then(() => this.render());
   }
 
-  //Board
-
   private async editBoardTitle(el: HTMLElement): Promise<void> {
-    const input = document.createElement("input");
+    const input = activeDocument.createElement("input");
     input.type = "text";
     input.value = this.board.title;
     input.className = "mkb-inline-input mkb-board-title-input";
@@ -244,11 +245,9 @@ export class KanbanBoard
       this.onBoardChange?.();
       this.render();
     };
-    input.addEventListener("blur", save);
+    input.addEventListener("blur", () => void save());
     input.addEventListener("keydown", (e) => { if (e.key === "Enter") input.blur(); if (e.key === "Escape") this.render(); });
   }
-
-  //Colonnes
 
   private async addColumn(): Promise<void>
   {
@@ -282,7 +281,7 @@ export class KanbanBoard
 
   private async editColumnTitle(el: HTMLElement, col: KanbanColumn): Promise<void>
   {
-    const input = document.createElement("input");
+    const input = activeDocument.createElement("input");
     input.type = "text";
     input.value = col.title;
     input.className = "mkb-inline-input";
@@ -293,7 +292,7 @@ export class KanbanBoard
         col.title = input.value.trim() || col.title; await this.persist();
         this.render();
       };
-    input.addEventListener("blur", save);
+    input.addEventListener("blur", () => void save());
     input.addEventListener("keydown", (e) =>
       {
         if (e.key === "Enter")
@@ -305,17 +304,17 @@ export class KanbanBoard
 
   private openColumnMenu(triggerEl: HTMLElement, col: KanbanColumn): void
   {
-    const existing = document.querySelectorAll(".mkb-column-menu-popup");
+    const existing = activeDocument.querySelectorAll(".mkb-column-menu-popup");
     existing.forEach(el => el.remove());
 
-    const popup = document.createElement("div");
+    const popup = activeDocument.createElement("div");
     popup.className = "mkb-column-menu-popup";
-    popup.style.position = "fixed";
-    popup.style.zIndex = "1000";
 
     const rect = triggerEl.getBoundingClientRect();
-    popup.style.top = (rect.bottom + 4) + "px";
-    popup.style.left = (rect.left - 150) + "px";
+    popup.setCssProps({
+        "top": `${rect.bottom + 4}px`,
+        "left": `${rect.left - 150}px`
+    });
 
     const leftBtn = popup.createEl("button", { text: t(137), cls: "mkb-menu-item" });
     leftBtn.addEventListener("click", (e) =>
@@ -325,8 +324,7 @@ export class KanbanBoard
       if (idx > 0)
       {
         [this.board.columns[idx], this.board.columns[idx - 1]] = [this.board.columns[idx - 1], this.board.columns[idx]];
-        this.persist();
-        this.render();
+        void this.persist().then(() => this.render());
       }
     });
 
@@ -337,15 +335,14 @@ export class KanbanBoard
       if (idx < this.board.columns.length - 1)
       {
         [this.board.columns[idx], this.board.columns[idx + 1]] = [this.board.columns[idx + 1], this.board.columns[idx]];
-        this.persist();
-        this.render();
+        void this.persist().then(() => this.render());
       }
     });
 
     const colorBtn = popup.createEl("button", { text: t(139), cls: "mkb-menu-item" });
     colorBtn.addEventListener("click", (e) => {
       e.stopPropagation();
-      const input = document.createElement("input");
+      const input = activeDocument.createElement("input");
       input.type = "color";
       input.value = col.color || "#6c8ebf";
       input.addEventListener("change", async () =>
@@ -361,22 +358,20 @@ export class KanbanBoard
     delBtn.addEventListener("click", (e) =>
     {
       e.stopPropagation();
-      this.deleteColumn(col.id);
+      void this.deleteColumn(col.id);
     });
 
-    document.body.appendChild(popup);
+    activeDocument.body.appendChild(popup);
 
-    setTimeout(() =>
+    window.setTimeout(() =>
     {
-      document.addEventListener("click", function closeMenu()
+      activeDocument.addEventListener("click", function closeMenu()
       {
         popup.remove();
-        document.removeEventListener("click", closeMenu);
+        activeDocument.removeEventListener("click", closeMenu);
       });
     }, 0);
   }
-
-  //cards
 
   private async addCard(colId: string): Promise<void>
   {
@@ -419,14 +414,14 @@ export class KanbanBoard
 
   private async editCardTitle(el: HTMLElement, card: KanbanCard, colId: string): Promise<void>
   {
-    const input = document.createElement("input");
+    const input = activeDocument.createElement("input");
     input.type = "text";
     input.value = card.title;
     input.className = "mkb-inline-input";
     el.replaceWith(input);
     input.focus();
     const save = async () => { card.title = input.value.trim() || card.title; await this.persist(); this.render(); };
-    input.addEventListener("blur", save);
+    input.addEventListener("blur", () => void save());
     input.addEventListener("keydown", (e) => { if (e.key === "Enter") input.blur(); if (e.key === "Escape") this.render(); });
   }
 
@@ -449,7 +444,6 @@ export class KanbanBoard
     field(t(115), card.dueDate ?? "", (v) => (card.dueDate = v || undefined));
     field(t(116), card.tags.join(", "), (v) => { card.tags = v.split(",").map(t => t.trim()).filter(Boolean); });
 
-    // Sélecteur priorité
     const priorityRow = modal.createDiv("mkb-editor-row");
     priorityRow.createEl("label", { text: t(117) });
     const select = priorityRow.createEl("select", { cls: "mkb-select" });
@@ -465,13 +459,6 @@ export class KanbanBoard
     const cancelBtn = btns.createEl("button", { text: t(119), cls: "mkb-btn mkb-btn-secondary" });
     cancelBtn.addEventListener("click", () => { overlay.remove(); this.render(); });
     overlay.addEventListener("click", (e) => { if (e.target === overlay) { overlay.remove(); this.render(); } });
-  }
-
-  //Utils
-
-  private async persist(): Promise<void>
-  {
-    await this.store.saveBoard(this.board);
   }
 
   private promptInline(placeholder: string): Promise<string | null>

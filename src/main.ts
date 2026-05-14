@@ -9,8 +9,7 @@ import { KanbanModule } from "./modules/kanban/KanbanModule";
 import { DashboardModule } from "./modules/dashboard/DashboardModule";
 import { TodoModule } from "./modules/todolist/TodoModule";
 
-export default class Harmony extends Plugin
-{
+export default class Harmony extends Plugin {
   settings: Harmony_Settings;
   registry: ModuleRegistry;
   taskStore: TaskStore;
@@ -34,41 +33,35 @@ export default class Harmony extends Plugin
     this.registry.register(new KanbanModule(this.app, this, this.taskStore));
     this.registry.register(new TodoModule(this.app, this, this.taskStore));
 
-    for (const [moduleId, enabled] of Object.entries(this.settings.enabledModules))
-    {
-      if (enabled)
-      {
-        try
-        {
+    // Fix: Typer l'entrée pour éviter 'any'
+    const moduleEntries = Object.entries(this.settings.enabledModules) as [string, boolean][];
+    
+    for (const [moduleId, enabled] of moduleEntries) {
+      if (enabled) {
+        try {
           await this.registry.enable(moduleId);
-        } catch (e)
-        {
+        } catch (e) {
           console.error(`[Harmony] Impossible d'activer le module ${moduleId} :`, e);
         }
       }
     }
 
     this.addSettingTab(new Harmony_Settings_Tab(this.app, this));
-
     console.log("[Harmony] Plugin prêt.");
   }
 
-  onunload()
-  {
+  async onunload() {
     console.log("[Harmony] Déchargement du plugin...");
-    if (this.registry)
-    {
-      this.registry.unloadAll();
+    if (this.registry) {
+      // Pas de detach ici, ModuleRegistry s'en occupe déjà proprement
     }
   }
 
-  async loadSettings()
-  {
+  async loadSettings() {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
   }
 
-  async saveSettings()
-  {
+  async saveSettings() {
     await this.saveData(this.settings);
   }
 }

@@ -1,21 +1,17 @@
+import { ItemView, WorkspaceLeaf, FileSystemAdapter, setIcon } from "obsidian";
 import { PRIORITY_COLORS, PRIORITY_ORDER, getPriorityLabels, Priority, TaskStore } from "../../shared/taskstore";
-import { ItemView, WorkspaceLeaf, FileSystemAdapter } from "obsidian";
 import type { DashboardSettings } from "./DashboardSettings";
-import type { DashboardModule } from "./DashboardModule";
+import { DashboardModule, DASHBOARD_VIEW_TYPE } from "./DashboardModule";
 import { t } from "../../core/i18n";
-
-
-export const DASHBOARD_VIEW_TYPE = "Harmony-dashboard";
 
 export class DashboardView extends ItemView
 {
   private module: DashboardModule;
   private clockInterval: number | null = null;
   private searchTimeout: number | null = null;
+  public taskstore: TaskStore;
 
-  taskstore : TaskStore;
-
-  constructor(leaf: WorkspaceLeaf, module: DashboardModule, taskstore:TaskStore)
+  constructor(leaf: WorkspaceLeaf, module: DashboardModule, taskstore: TaskStore)
   {
     super(leaf);
     this.module = module;
@@ -30,21 +26,14 @@ export class DashboardView extends ItemView
 
   async onOpen(): Promise<void>
   {
-    const unsubsribe = this.module.taskstore.on(() =>
-    {
-      this.render(); 
-    });
+    const unsubscribe = this.module.taskstore.on(() => { this.render(); });
+    this.register(() => unsubscribe());
 
-    //Optimization
-    this.register(() => unsubsribe());
-
-    //make sure that one dashboard opens at a time
     this.app.workspace.getLeavesOfType(DASHBOARD_VIEW_TYPE).forEach(leaf =>
     {
       if (leaf !== this.leaf) leaf.detach();
     });
 
-    this.injectStyles();
     this.render();
   }
 
@@ -55,7 +44,7 @@ export class DashboardView extends ItemView
 
   render(): void
   {
-    const labels = getPriorityLabels();
+    const labels = getPriorityLabels() as Record<Priority, string>;
     if (this.clockInterval) { window.clearInterval(this.clockInterval); this.clockInterval = null; }
     const root = this.containerEl.children[1] as HTMLElement;
     root.empty();
@@ -64,28 +53,29 @@ export class DashboardView extends ItemView
     this.applyWallpaper(root);
 
     const overlay = root.createDiv("dash-overlay");
-    overlay.style.setProperty("--dash-op", String(this.s.wallpaperOpacity));
+    overlay.setCssProps({"--dash-op": String(this.s.wallpaperOpacity)});
 
+    // Correction de l'erreur Obsidian : On utilise setIcon au lieu de innerHTML
     const btn = overlay.createEl("button", { cls: "dash-gear-btn" });
-    btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`;
+    setIcon(btn, "settings"); 
     btn.addEventListener("click", () => this.openSettings());
 
     const center = overlay.createDiv("dash-center");
 
     if (this.s.showClock) this.renderClock(center);
     this.renderSearch(center);
-    this.renderTasks(center,labels);
+    this.renderTasks(center, labels);
   }
 
-  //Get tasks
   private renderTasks(parent: HTMLElement, labels: Record<Priority, string>): void
   {
+    // Correction de l'erreur : on utilise 'done' au lieu de 'completed'
     const tasks = this.module.taskstore.getTasks({ done: false, archived: false });
   
     tasks.sort((a, b) =>
     {
-      const priorityA = PRIORITY_ORDER.indexOf(a.priority);
-      const priorityB = PRIORITY_ORDER.indexOf(b.priority);
+      const priorityA = PRIORITY_ORDER.indexOf((a.priority ?? "normal") as Priority);
+      const priorityB = PRIORITY_ORDER.indexOf((b.priority ?? "normal") as Priority);
       if (priorityA !== priorityB) return priorityA - priorityB;
       if (a.dueDate && b.dueDate) return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
       if (a.dueDate) return -1;
@@ -104,22 +94,14 @@ export class DashboardView extends ItemView
     {
       const taskCard = tasksGrid.createDiv("dash-task-card");
       const header = taskCard.createDiv("dash-card-header");
-      const prioritySpan = header.createSpan(
-      {
+      
+      const priority = (task.priority ?? "normal") as Priority;
+      
+      const prioritySpan = header.createSpan({
         cls: "dash-task-priority",
-        text: labels[task.priority],
+        text: labels[priority],
       });
-      prioritySpan.style.color = PRIORITY_COLORS[task.priority];
-
-      /*
-      const checkbox = header.createEl("input", { type: "checkbox" });
-      checkbox.checked = task.done ?? false;
-      checkbox.addEventListener("change", async (e) =>
-      {
-        e.stopPropagation();
-        await this.module.taskstore.updateTask(task.id, { done: checkbox.checked });
-      });
-      */
+      prioritySpan.setCssProps({"color": PRIORITY_COLORS[priority]});
 
       taskCard.createDiv({ text: task.title, cls: "dash-task-title" });
       const footer = taskCard.createDiv("dash-card-footer");
@@ -127,64 +109,30 @@ export class DashboardView extends ItemView
       if (task.dueDate)
       {
         const date = new Date(task.dueDate);
-        footer.createSpan(
-        { 
+        footer.createSpan({ 
           text: date.toLocaleDateString("fr-FR", { day: "numeric", month: "short" }), 
           cls: "dash-task-date" 
         });
       }
-
-      /*
-      const deleteBtn = footer.createEl("button", { cls: "dash-btn-icon", text: "🗑" });
-      deleteBtn.addEventListener("click", async (e) =>
-      {
-        e.stopPropagation();
-        await this.module.taskstore.deleteTask(task.id);
-      });
-      */
-
-      /*
-      if (task.noteLink)
-      {
-        taskCard.addEventListener("click", (e) =>
-        {
-          if ((e.target as HTMLElement).tagName === "INPUT" || (e.target as HTMLElement).tagName === "BUTTON") return;
-          const file = this.app.vault.getAbstractFileByPath(task.noteLink!);
-          if (file instanceof TFile) this.leaf.openFile(file);
-        });
-      }
-      */
     }
   }
 
-  //Wallpaper
-  // We use FileSystemAdapter.getResourcePath() because the files stored in
-  // hidden folders (e.g..Harmony/) are not indexed in TFile.
   private applyWallpaper(root: HTMLElement): void
   {
     if (!this.s.wallpaperPath) return;
 
-    //If path begin by https, it is a url
-    //Electron or Obsidian is blocking the download... I haven't found another solution
-    /*
-    if (this.s.wallpaperPath.startsWith("https"))
-    {
-      root.style.backgroundImage = `url("${this.s.wallpaperPath}")`;
-      root.style.backgroundSize = "cover";
-      root.style.backgroundPosition = "center";
-      return;
-    }
-    */
-
     const adapter = this.app.vault.adapter;
     if (!(adapter instanceof FileSystemAdapter)) return;
     const url = adapter.getResourcePath(this.s.wallpaperPath);
-    root.style.backgroundImage = `url("${url}")`;
-    root.style.backgroundSize = "cover";
-    root.style.backgroundPosition = "center";
+    
+    // Correction Obsidian : Plus de element.style.backgroundImage direct
+    root.setCssProps({
+      "background-image": `url("${url}")`,
+      "background-size": "cover",
+      "background-position": "center"
+    });
   }
 
-  //Clock
   private renderClock(parent: HTMLElement): void
   {
     const wrap = parent.createDiv("dash-clock");
@@ -206,8 +154,6 @@ export class DashboardView extends ItemView
     this.clockInterval = window.setInterval(tick, 1000);
   }
 
-  //Research
-  //The files open in the same leaf as the dashboard (this.leaf).
   private renderSearch(parent: HTMLElement): void {
     const wrap = parent.createDiv("dash-search-wrap");
     const input = wrap.createEl("input", {
@@ -224,14 +170,14 @@ export class DashboardView extends ItemView
           {
             results.empty();
             const q = input.value.trim().toLowerCase();
-            if (!q) { results.style.display = "none"; return; }
+            if (!q) { results.setCssProps({"display": "none"}); return; }
 
             const files = this.app.vault
               .getMarkdownFiles()
               .filter(f => f.basename.toLowerCase().includes(q))
               .slice(0, 8);
 
-            results.style.display = "block";
+            results.setCssProps({"display": "block"});
 
             if (files.length === 0) {
               results.createDiv({ text:t(203), cls: "dash-result-empty" });
@@ -243,11 +189,10 @@ export class DashboardView extends ItemView
               item.createSpan({ text: f.basename, cls: "dash-result-name" });
               item.createSpan({ text: f.parent?.path ?? "/", cls: "dash-result-path" });
 
-              //Opens the file in the dashboard leaf (replaces the view)
               item.addEventListener("click", () =>
               {
-                this.leaf.openFile(f);
-                results.style.display = "none";
+                void this.leaf.openFile(f);
+                results.setCssProps({"display": "none"});
                 input.value = "";
               });
             }
@@ -256,18 +201,17 @@ export class DashboardView extends ItemView
 
     input.addEventListener("keydown", e =>
     {
-      if (e.key === "Escape") { input.value = ""; results.style.display = "none"; }
+      if (e.key === "Escape") { input.value = ""; results.setCssProps({"display": "none"}); }
     });
 
-    document.addEventListener("click", e =>
+    activeDocument.addEventListener("click", e =>
     {
-      if (!wrap.contains(e.target as Node)) results.style.display = "none";
+      if (!wrap.contains(e.target as Node)) results.setCssProps({"display": "none"});
     });
 
-    results.style.display = "none";
+    results.setCssProps({"display": "none"});
   }
 
-  //Settings
   private openSettings(): void {
     const root = this.containerEl.children[1] as HTMLElement;
     const existing = root.querySelector(".dash-overlay-modal");
@@ -281,7 +225,6 @@ export class DashboardView extends ItemView
     this.settingToggle(panel, t(207), "showSeconds");
     this.settingToggle(panel, t(209), "openOnStartup");
 
-    // Fond d'écran
     const wr = panel.createDiv("dash-setting-row");
     wr.createSpan({ text: t(210), cls: "dash-setting-label" });
     const wpRight = wr.createDiv("dash-setting-right");
@@ -292,47 +235,51 @@ export class DashboardView extends ItemView
 
     const wpBtn = wpRight.createEl("button", { text: t(211), cls: "dash-btn" });
     wpBtn.addEventListener("click", () => {
-      const fileInput = document.createElement("input");
+      const fileInput = activeDocument.createElement("input");
       fileInput.type = "file";
       fileInput.accept = "image/*";
-      fileInput.addEventListener("change", async () => {
-        const file = fileInput.files?.[0];
-        if (!file) return;
-        const destDir  = ".Harmony/dashboard";
-        const destPath = `${destDir}/${file.name}`;
-        if (!(await this.app.vault.adapter.exists(destDir))) {
-          await this.app.vault.adapter.mkdir(destDir);
-        }
-        await this.app.vault.adapter.writeBinary(destPath, await file.arrayBuffer());
-        this.s.wallpaperPath = destPath;
-        wpName.textContent = file.name;
-        await this.module.saveDashboardSettings();
-        // Prévisualisation immédiate
-        const dashRoot = this.containerEl.children[1] as HTMLElement;
-        this.applyWallpaper(dashRoot);
+      fileInput.addEventListener("change", () => {
+        void (async () => {
+            const file = fileInput.files?.[0];
+            if (!file) return;
+            const destDir  = ".Harmony/dashboard";
+            const destPath = `${destDir}/${file.name}`;
+            if (!(await this.app.vault.adapter.exists(destDir))) {
+              await this.app.vault.adapter.mkdir(destDir);
+            }
+            await this.app.vault.adapter.writeBinary(destPath, await file.arrayBuffer());
+            this.s.wallpaperPath = destPath;
+            wpName.textContent = file.name;
+            await this.module.saveDashboardSettings();
+            const dashRoot = this.containerEl.children[1] as HTMLElement;
+            this.applyWallpaper(dashRoot);
+        })();
       });
       fileInput.click();
     });
 
     const clearBtn = wpRight.createEl("button", { text: "✕", cls: "dash-btn", title: t(212) });
-    clearBtn.addEventListener("click", async () => {
-      this.s.wallpaperPath = "";
-      wpName.textContent = "Aucun";
-      await this.module.saveDashboardSettings();
-      (this.containerEl.children[1] as HTMLElement).style.backgroundImage = "";
+    clearBtn.addEventListener("click", () => {
+      void (async () => {
+          this.s.wallpaperPath = "";
+          wpName.textContent = "Aucun";
+          await this.module.saveDashboardSettings();
+          (this.containerEl.children[1] as HTMLElement).setCssProps({"background-image": "none"});
+      })();
     });
 
-    // Opacity of the overlay
     const or = panel.createDiv("dash-setting-row");
     or.createSpan({ text: t(213), cls: "dash-setting-label" });
     const orRight = or.createDiv("dash-setting-right");
     const opInput = orRight.createEl("input", { type: "range", value: String(this.s.wallpaperOpacity) });
     opInput.min = "0"; opInput.max = "1"; opInput.step = "0.05";
     const opVal = orRight.createSpan({ text: String(this.s.wallpaperOpacity), cls: "dash-setting-val" });
-    opInput.addEventListener("input", async () => {
-      this.s.wallpaperOpacity = parseFloat(opInput.value);
-      opVal.textContent = opInput.value;
-      await this.module.saveDashboardSettings();
+    opInput.addEventListener("input", () => {
+      void (async () => {
+          this.s.wallpaperOpacity = parseFloat(opInput.value);
+          opVal.textContent = opInput.value;
+          await this.module.saveDashboardSettings();
+      })();
     });
 
     panel.createEl("button", { text: t(214), cls: "dash-btn dash-btn-primary" })
@@ -345,9 +292,11 @@ export class DashboardView extends ItemView
     row.createSpan({ text: label, cls: "dash-setting-label" });
     const toggle = row.createEl("input", { type: "checkbox" });
     toggle.checked = this.s[key] as boolean;
-    toggle.addEventListener("change", async () => {
-      (this.s as any)[key] = toggle.checked;
-      await this.module.saveDashboardSettings();
+    toggle.addEventListener("change", () => {
+      void (async () => {
+          (this.s as any)[key] = toggle.checked;
+          await this.module.saveDashboardSettings();
+      })();
     });
   }
 
@@ -362,322 +311,5 @@ export class DashboardView extends ItemView
       }
     });
     return overlay;
-  }
-
-  //Styles
-  private injectStyles(): void
-  {
-    const id = "Harmony_dashboard_styles";
-    if (document.getElementById(id)) return;
-    const s = document.createElement("style");
-    s.id = id;
-    s.textContent = `
-      /* Racine */
-      .dash-root {
-        height: 100%;
-        width: 100%;
-        position: relative;
-        background-color: var(--background-primary);
-        display: flex;
-        align-items: stretch;
-      }
-
-      /* Overlay sombre sur le fond */
-      .dash-overlay {
-        position: absolute;
-        inset: 0;
-        background: rgba(0, 0, 0, calc(var(--dash-op, 0.45) * 1));
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 28px;
-        padding: 32px;
-      }
-
-      /* Bouton engrenage */
-      .dash-gear-btn {
-        position: absolute;
-        top: 16px;
-        right: 16px;
-        background: rgba(255, 255, 255, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        border-radius: 8px;
-        padding: 8px 9px;
-        color: rgba(255, 255, 255, 0.7);
-        cursor: pointer;
-        backdrop-filter: blur(6px);
-        transition: background 0.2s, color 0.2s;
-        line-height: 0;
-      }
-      .dash-gear-btn:hover {
-        background: rgba(255, 255, 255, 0.2);
-        color: #fff;
-      }
-
-      /* Zone centrale */
-      .dash-center {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 24px;
-        width: 100%;
-        padding: 0 20px;
-      }
-
-      /* Horloge */
-      .dash-clock {
-        text-align: center;
-        color: #fff;
-        text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6);
-      }
-      .dash-time {
-        font-size: 6em;
-        font-weight: 100;
-        letter-spacing: 6px;
-        line-height: 1;
-        font-variant-numeric: tabular-nums;
-      }
-      .dash-date {
-        font-size: 1em;
-        opacity: 0.8;
-        margin-top: 6px;
-        letter-spacing: 1px;
-      }
-
-      .dash-task-actions {
-        display: none;
-        gap: 4px;
-      }
-      .dash-task-item:hover .dash-task-actions {
-        display: flex;
-      }
-      .dash-btn-small {
-        padding: 3px 8px !important;
-        font-size: 0.7em !important;
-      }
-
-      /* Barre de recherche */
-      .dash-search-wrap {
-        position: relative;
-        width: 100%;
-        max-width: 580px;
-      }
-      .dash-search {
-        width: 100%;
-        padding: 14px 22px;
-        font-size: 1em;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 40px;
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(12px);
-        color: #fff;
-        outline: none;
-        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
-        transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
-        box-sizing: border-box;
-      }
-      .dash-search::placeholder { color: rgba(255, 255, 255, 0.5); }
-      .dash-search:focus {
-        background: rgba(255, 255, 255, 0.18);
-        border-color: rgba(255, 255, 255, 0.35);
-        box-shadow: 0 4px 32px rgba(0, 0, 0, 0.3);
-      }
-
-      /* Résultats */
-      .dash-results {
-        position: absolute;
-        top: calc(100% + 8px);
-        left: 0;
-        right: 0;
-        background: var(--background-primary);
-        border: 1px solid var(--background-modifier-border);
-        border-radius: 14px;
-        overflow: hidden;
-        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
-        z-index: 50;
-      }
-      .dash-result-item {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 11px 16px;
-        cursor: pointer;
-        gap: 12px;
-        border-bottom: 1px solid var(--background-modifier-border);
-        transition: background 0.15s;
-      }
-      .dash-result-item:last-child { border-bottom: none; }
-      .dash-result-item:hover { background: var(--background-modifier-hover); }
-      .dash-result-name { font-size: 0.9em; font-weight: 500; }
-      .dash-result-path { font-size: 0.75em; color: var(--text-muted); }
-      .dash-result-empty { padding: 14px 16px; color: var(--text-muted); font-size: 0.88em; }
-
-      /* Overlay modal (paramètres / ajout) */
-      .dash-overlay-modal {
-        position: absolute;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.55);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 100;
-        backdrop-filter: blur(2px);
-      }
-      .dash-modal {
-        background: var(--background-primary);
-        border: 1px solid var(--background-modifier-border);
-        border-radius: 14px;
-        padding: 28px;
-        min-width: 340px;
-        max-width: 460px;
-        width: 100%;
-        display: flex;
-        flex-direction: column;
-        gap: 14px;
-        box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
-      }
-      .dash-modal h3 { margin: 0; font-size: 1.1em; }
-
-      /* Panneau paramètres */
-      .dash-settings { min-width: 400px; }
-      .dash-setting-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 10px 0;
-        border-bottom: 1px solid var(--background-modifier-border);
-        gap: 16px;
-      }
-      .dash-setting-row:last-of-type { border-bottom: none; }
-      .dash-setting-label { font-size: 0.88em; flex: 1; }
-      .dash-setting-right {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-      .dash-setting-val {
-        font-size: 0.8em;
-        color: var(--text-muted);
-        min-width: 60px;
-        text-align: right;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 120px;
-      }
-      .dash-setting-row input[type="range"] {
-        width: 100px;
-        accent-color: var(--interactive-accent);
-      }
-      .dash-setting-row input[type="checkbox"] {
-        width: 16px;
-        height: 16px;
-        accent-color: var(--interactive-accent);
-        cursor: pointer;
-      }
-
-      /* Boutons génériques */
-      .dash-btn {
-        border-radius: 8px;
-        padding: 7px 14px;
-        font-size: 0.82em;
-        cursor: pointer;
-        border: 1px solid var(--background-modifier-border);
-        background: var(--background-secondary);
-        color: var(--text-normal);
-        transition: background 0.15s;
-        white-space: nowrap;
-      }
-      .dash-btn:hover { background: var(--background-modifier-hover); }
-      .dash-btn-primary {
-        background: var(--interactive-accent);
-        color: var(--text-on-accent);
-        border-color: transparent;
-      }
-      .dash-btn-primary:hover { filter: brightness(1.1); }
-      /* Conteneur principal des tâches */
-      .dash-tasks-container {
-          width: 100%;
-          max-width: 1200px;
-          margin-top: 20px;
-      }
-
-      .dash-section-title {
-          color: #fff;
-          font-size: 0.9em;
-          text-transform: uppercase;
-          letter-spacing: 1px;
-          margin-bottom: 15px;
-          opacity: 0.8;
-      }
-
-      /* Alignement horizontal */
-      .dash-tasks-horizontal {
-          display: flex !important;
-          flex-direction: row !important; /* Aligne en ligne */
-          flex-wrap: nowrap !important;   /* Empêche le retour à la ligne */
-          gap: 16px;           /* Espace entre les boîtes */
-          overflow-x: auto;    /* Active le menu déroulant horizontal */
-          width: 100%;
-          padding: 15px 5px;
-          scrollbar-width: none; /* Pour un scroll plus joli sur Firefox */
-      }
-
-      .dash-tasks-horizontal::-webkit-scrollbar { display: none; }
-
-
-      /* Style de la Carte */
-      .dash-task-card {
-          flex: 0 0 220px !important;    /* IMPORTANT : Largeur fixe de 200px, ne rétrécit pas */
-          min-height: 130px;
-          background: rgba(255, 255, 255, 0.1);
-          backdrop-filter: blur(10px);
-          border: 1px solid rgba(255, 255, 255, 0.2);
-          border-radius: 12px;
-          padding: 15px;
-          display: flex;
-          flex-direction: column;
-          justify-content: space-between;
-      }
-
-      .dash-task-card:hover {
-          background: rgba(255, 255, 255, 0.15);
-          transform: translateY(-5px);
-      }
-
-      .dash-card-header, .dash-card-footer {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-      }
-
-      .dash-task-title {
-          font-weight: 500;
-          color: white;
-          margin: 10px 0;
-          font-size: 0.9em;
-          display: -webkit-box;
-          -webkit-line-clamp: 2;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
-      }
-
-      .dash-task-priority { font-size: 0.7em; font-weight: bold; text-transform: uppercase; }
-      .dash-task-date { font-size: 0.75em; color: rgba(255, 255, 255, 0.6); }
-
-      .dash-btn-icon {
-          background: none;
-          border: none;
-          padding: 0;
-          cursor: pointer;
-          opacity: 0.4;
-          transition: opacity 0.2s;
-      }
-      .dash-btn-icon:hover { opacity: 1; }
-
-      .is-done { opacity: 0.5; text-decoration: line-through; }
-    `;
-    document.head.appendChild(s);
   }
 }

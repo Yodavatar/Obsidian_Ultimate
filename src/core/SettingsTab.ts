@@ -14,13 +14,18 @@ export class Harmony_Settings_Tab extends PluginSettingTab {
     const { containerEl } = this;
     containerEl.empty();
 
-    containerEl.createEl("h2", { text: t(1) });
+    new Setting(containerEl)
+      .setName(t(1))
+      .setHeading();
+
     containerEl.createEl("p", {
       text: t(2),
       cls: "setting-item-description",
     });
 
-    containerEl.createEl("h3", { text: t(13) });
+    new Setting(containerEl)
+      .setName(t(13))
+      .setHeading();
 
     new Setting(containerEl)
       .setName(t(14))
@@ -39,10 +44,13 @@ export class Harmony_Settings_Tab extends PluginSettingTab {
       });
 
     containerEl.createEl("hr");
-    containerEl.createEl("h3", { text: t(10) });
+    
+    new Setting(containerEl)
+      .setName(t(10))
+      .setHeading();
 
-    const modules = this.plugin.registry.getAll();
-
+    const modules = Array.from((this.plugin.registry as any).modules.values()) as any[];
+    
     if (modules.length === 0) {
       containerEl.createEl("p", { text: t(11) });
     } else {
@@ -69,8 +77,9 @@ export class Harmony_Settings_Tab extends PluginSettingTab {
 
     containerEl.createEl("hr");
 
-    // --- SECTION : COMMUNAUTÉ & RESSOURCES ---
-    containerEl.createEl("h3", { text: t(3) });
+    new Setting(containerEl)
+      .setName(t(3))
+      .setHeading();
 
     new Setting(containerEl)
       .setName(t(4))
@@ -80,16 +89,6 @@ export class Harmony_Settings_Tab extends PluginSettingTab {
         .setCta()
         .onClick(() => {
           window.open("https://github.com/yodavatar/Harmony/discussions", "_blank");
-        })
-      );
-
-    new Setting(containerEl)
-      .setName(t(7))
-      .setDesc(t(8))
-      .addButton(btn => btn
-        .setButtonText(t(9))
-        .onClick(() => {
-          window.open("https://github.com/yodavatar/Harmony/projects", "_blank");
         })
       );
   }

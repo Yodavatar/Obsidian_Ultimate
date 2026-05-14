@@ -38,7 +38,14 @@ export class ModuleRegistry
     const module = this.modules.get(moduleId);
     if (!module || !this.activeModules.has(moduleId)) return;
 
-    module.onunload();
+    try
+    {
+      module.onunload();
+    }
+    catch(e)
+    {
+      console.error(`Erreur lors du déchargement de ${moduleId}`, e)
+    }
     this.activeModules.delete(moduleId);
     console.log(`[Harmony] Module "${moduleId}" désactivé.`);
   }

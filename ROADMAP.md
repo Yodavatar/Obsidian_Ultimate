@@ -7,7 +7,7 @@ and reporting bugs.
 
 ## Planned Releases
 
-### v0.1.7 - Calendar
+### v0.2.0 - Calendar
 
 **Timeline:** Mai 2026
 
@@ -17,7 +17,7 @@ and reporting bugs.
     - Drag & drop tasks between dates
     - Visual indicators for task priorities
 
-### v0.1.8 Advanced Search
+### v0.3.0 Advanced Search
 
 **Timeline** : June 2026 
 
@@ -28,7 +28,7 @@ and reporting bugs.
     - Search across all tasks
     - Save search queries
 
-### v0.2 - Task & Note Linking
+### v0.4.0 - Task & Note Linking
 
 **Timeline:** August 2026
 
@@ -49,7 +49,7 @@ and reporting bugs.
 - [ ] Performance optimization for large task lists
 - [ ] Bug fixes and stability improvements
 
-### v0.2.3 - Future Ideas
+### v0.5.0 - Future Ideas
 
 **Timeline:** After September 2026
 

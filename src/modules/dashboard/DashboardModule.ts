@@ -1,10 +1,12 @@
 import { App, EventRef } from "obsidian";
 import type Harmony from "../../main";
 import type { IModule } from "../../shared/types";
-import { DashboardView, DASHBOARD_VIEW_TYPE } from "./DashboardView";
+import { DashboardView } from "./DashboardView";
 import { DEFAULT_DASHBOARD_SETTINGS, type DashboardSettings } from "./DashboardSettings";
 import { t, onLanguageChange } from "../../core/i18n";
 import { TaskStore } from "../../shared/taskstore";
+
+export const DASHBOARD_VIEW_TYPE = "Harmony-dashboard";
 
 export class DashboardModule implements IModule
 {
@@ -98,7 +100,8 @@ export class DashboardModule implements IModule
       this.layoutEventRef = null;
     }
 
-    this.app.workspace.detachLeavesOfType(DASHBOARD_VIEW_TYPE);
+    //fix 
+    //this.app.workspace.detachLeavesOfType(DASHBOARD_VIEW_TYPE);
     console.log("[DashboardModule] Désactivé.");
   }
 

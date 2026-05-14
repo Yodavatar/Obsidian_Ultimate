@@ -40,31 +40,28 @@ export class KanbanModule implements IModule
     this.unsubLang = onLanguageChange(() =>
     {
       const leaves = this.app.workspace.getLeavesOfType(KANBAN_VIEW_TYPE);
-      for (const leaf of leaves) (leaf.view as KanbanView).renderBoardSelector();
+      for (const leaf of leaves) void (leaf.view as KanbanView).renderBoardSelector();
     });
 
     this.plugin.addCommand(
     {
       id: "open-kanban",
       name: t(101),
-      callback: () => this.activateView(),
+      callback: () => void this.activateView(),
     });
 
-    this.ribbonIconEl = this.plugin.addRibbonIcon("kanban", "Kanban", () => this.activateView());
-    //await this.activateView();
+    this.ribbonIconEl = this.plugin.addRibbonIcon("kanban", "Kanban", () => void this.activateView());
     console.log("[KanbanModule] Activé.");
   }
 
   onunload(): void
   {
     this.unsubLang?.();
-    this.app.workspace.detachLeavesOfType(KANBAN_VIEW_TYPE);
+    // FIX: Do not deteach the view
     
     if (this.ribbonIconEl)
     {
       this.ribbonIconEl.remove();
-      //this.ribbonIconEl = null;
-      console.log("delete kanban logo")
     }
     console.log("[KanbanModule] Désactivé.");
   }

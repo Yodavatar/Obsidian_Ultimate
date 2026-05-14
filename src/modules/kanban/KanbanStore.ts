@@ -1,4 +1,4 @@
-import { App, normalizePath, Modal} from "obsidian";
+import { App, normalizePath, Modal } from "obsidian";
 import { t } from "../../core/i18n";
 import type { TaskStore, Task } from "../../shared/taskstore";
 
@@ -41,12 +41,10 @@ export class KanbanStore
   async ensureDataDir(): Promise<void>
   {
     if (!(await this.app.vault.adapter.exists(DATA_DIR)))
-      {
+    {
       await this.app.vault.adapter.mkdir(DATA_DIR);
     }
   }
-
-  //boards
 
   async loadBoard(boardId: string): Promise<KanbanBoardData | null>
   {
@@ -60,7 +58,6 @@ export class KanbanStore
   {
     await this.ensureDataDir();
     board.updatedAt = new Date().toISOString();
-    // On s'assure qu'aucune carte ne se retrouve serialisée dans le JSON board
     const toWrite: KanbanBoardData =
     {
       ...board,
@@ -83,11 +80,19 @@ export class KanbanStore
       try
       {
         const data = JSON.parse(raw) as KanbanBoardData;
-        for (const col of data.columns) delete (col as any).cards;
+        for (const col of data.columns) {
+          // FIX: Éviter le 'unsafe member access on any'
+          if ('cards' in col) {
+             delete (col as unknown as {cards?: unknown}).cards;
+          }
+        }
         boards.push(data);
       }
-      catch
-      {}
+      catch (e)
+      {
+        // FIX: Remplir le bloc catch vide
+        console.warn(`[Harmony] Erreur de lecture du Kanban ${f}`, e);
+      }
     }
     return boards.sort((a, b) => a.title.localeCompare(b.title));
   }
@@ -109,7 +114,6 @@ export class KanbanStore
 
     if (!confirmed) return;
 
-    //del all tasks of a board
     await this.taskStore.deleteTasksByBoard(boardId);
 
     const path = this.boardPath(boardId);
@@ -141,24 +145,17 @@ export class KanbanStore
     return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
   }
 
-
-  //return the tasks not harchived in a column
   getCards(boardId: string, columnId: string): KanbanCard[]
   {
     return this.taskStore.getTasks({ source: "kanban", boardId, columnId, archived: false });
   }
 
-  //return the harchived tasks in all the board
   getArchivedCards(boardId: string): KanbanCard[]
   {
     return this.taskStore.getTasks({ source: "kanban", boardId, archived: true });
   }
 
-  async addCard(
-    boardId: string,
-    columnId: string,
-    title: string,
-  ): Promise<KanbanCard> {
+  async addCard(boardId: string, columnId: string, title: string): Promise<KanbanCard> {
     return this.taskStore.addTask({
       id: this.taskStore.generateId("card"),
       source: "kanban",
@@ -172,10 +169,7 @@ export class KanbanStore
     });
   }
 
-  async updateCard(
-    cardId: string,
-    changes: Partial<Omit<Task, "id" | "createdAt">>,
-  ): Promise<KanbanCard | null>
+  async updateCard(cardId: string, changes: Partial<Omit<Task, "id" | "createdAt">>): Promise<KanbanCard | null>
   {
     return this.taskStore.updateTask(cardId, changes);
   }
@@ -195,13 +189,11 @@ export class KanbanStore
     return this.taskStore.updateTask(cardId, { archived: false });
   }
 
-  //move a task to a another colomn
   async moveCard(cardId: string, targetColumnId: string): Promise<KanbanCard | null>
   {
     return this.taskStore.updateTask(cardId, { columnId: targetColumnId });
   }
 
-  //delete all tasks of a colomn
   async deleteCardsByColumn(boardId: string, columnId: string): Promise<void>
   {
     const tasks = this.taskStore.getTasks({ source: "kanban", boardId, columnId });
