@@ -9,8 +9,14 @@ export interface IModule
 {
   id: string;
   name: string;
+  enabled: boolean;
   onload(): Promise<void> | void;
   onunload(): void;
+}
+
+export interface ModuleSettings
+{
+  [key: string]: any;
 }
 
 /**
@@ -23,11 +29,25 @@ export interface Harmony_Settings
   enabledModules: Record<string, boolean>;
   moduleSettings: Record<string, unknown>;
   language: Language;
+  version:string;
 }
 
 export const DEFAULT_SETTINGS: Harmony_Settings =
 {
-  enabledModules: {},
-  moduleSettings: {},
+  enabledModules:
+  {
+    "dashboard": true,
+    "kanban": true,
+    "todolist": true,
+  },
+  moduleSettings:
+  {
+    "dashboard":
+    {
+      "wallpaper": "",
+      "opacity": 0.8
+    }
+  },
   language: "en",
+  version: "0.1.7",
 };

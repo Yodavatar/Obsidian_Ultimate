@@ -53,10 +53,12 @@ export class KanbanView extends ItemView
       if (this.currentBoard && b.id === this.currentBoard.id) opt.selected = true;
     }
 
-    select.addEventListener("change", async () =>
-    {
-      const board = await this.store.loadBoard(select.value);
-      if (board) this.openBoard(board, root);
+    select.addEventListener("change", () => {
+      void (async () =>
+      {
+        const board = await this.store.loadBoard(select.value);
+        if (board) this.openBoard(board, root);
+      })();
     });
 
     const newBtn = bar.createEl("button", { cls: "mkb-btn mkb-btn-secondary", text: t(106) });
@@ -64,11 +66,15 @@ export class KanbanView extends ItemView
 
     const delBtn = bar.createEl("button", { cls: "mkb-btn-icon mkb-danger", title: t(104) });
     setIcon(delBtn, "trash");
-    delBtn.addEventListener("click", async () =>
+  
+    delBtn.addEventListener("click", () =>
     {
-      await this.store.deleteBoard(select.value);
-      this.currentBoard = null;
-      await this.renderBoardSelector();
+      void(async() =>
+      {
+        await this.store.deleteBoard(select.value);
+        this.currentBoard = null;
+        await this.renderBoardSelector();
+      })()
     });
 
     const boardContainer = root.createDiv("mkb-board-container");

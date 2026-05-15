@@ -4,7 +4,8 @@ import { t } from "../core/i18n";
 //types
 
 export type Priority = "urgent" | "high" | "normal" | "low";
-export type TaskSource = "kanban" | "todo" | "calendar" | string;
+export type ViewType = "kanban" | "todo" | "calendar" | (string & {});
+export type TaskSource = "kanban" | "todo" | "dashboard" | "calendar";
 
 export interface Task
 {

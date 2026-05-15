@@ -10,6 +10,7 @@ export class TodoModule implements IModule
 {
   id = "todo";
   name = "Todo List";
+  enabled: boolean = true;
 
   private app: App;
   private plugin: Harmony;
@@ -70,6 +71,6 @@ export class TodoModule implements IModule
       leaf = workspace.getLeaf("tab");
       await leaf.setViewState({ type: TODO_VIEW_TYPE, active: true });
     }
-    workspace.revealLeaf(leaf);
+    await workspace.revealLeaf(leaf);
   }
 }

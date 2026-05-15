@@ -27,6 +27,7 @@ const EN: Record<number, string> =
   12: "ID",
   13: "Language",
   14: "Interface language",
+  15: "Select the interface language",
 
   //Kanban
   100: "Kanban",
@@ -145,6 +146,7 @@ const FR: Partial<Record<number, string>> =
   12: "ID",
   13: "Langue",
   14: "Langue de l'interface",
+  15: "Selectionner la langue de l'interface",
 
   //Kanban
   100: "Kanban",

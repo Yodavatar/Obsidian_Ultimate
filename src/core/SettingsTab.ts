@@ -2,15 +2,18 @@ import { App, PluginSettingTab, Setting } from "obsidian";
 import { t, setLanguage, type Language } from "./i18n";
 import type Harmony from "../main";
 
-export class Harmony_Settings_Tab extends PluginSettingTab {
+export class Harmony_Settings_Tab extends PluginSettingTab
+{
   plugin: Harmony;
 
-  constructor(app: App, plugin: Harmony) {
+  constructor(app: App, plugin: Harmony)
+  {
     super(app, plugin);
     this.plugin = plugin;
   }
 
-  display(): void {
+  display(): void
+  {
     const { containerEl } = this;
     containerEl.empty();
 
@@ -18,7 +21,8 @@ export class Harmony_Settings_Tab extends PluginSettingTab {
       .setName(t(1))
       .setHeading();
 
-    containerEl.createEl("p", {
+    containerEl.createEl("p",
+    {
       text: t(2),
       cls: "setting-item-description",
     });
@@ -29,7 +33,7 @@ export class Harmony_Settings_Tab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName(t(14))
-      .setDesc("Sélectionnez la langue de l'interface.")
+      .setDesc(t(15))
       .addDropdown(drop => {
         drop
           .addOption("en", "English")
@@ -49,30 +53,24 @@ export class Harmony_Settings_Tab extends PluginSettingTab {
       .setName(t(10))
       .setHeading();
 
-    const modules = Array.from((this.plugin.registry as any).modules.values()) as any[];
-    
-    if (modules.length === 0) {
-      containerEl.createEl("p", { text: t(11) });
-    } else {
-      for (const module of modules) {
-        new Setting(containerEl)
-          .setName(module.name)
-          .setDesc(`Identifiant : ${module.id}`)
-          .addToggle((toggle) => {
-            toggle
-              .setValue(this.plugin.settings.enabledModules[module.id] ?? false)
-              .onChange(async (value) => {
-                this.plugin.settings.enabledModules[module.id] = value;
-                await this.plugin.saveSettings();
-                
-                if (value) {
-                  await this.plugin.registry.enable(module.id);
-                } else {
-                  this.plugin.registry.disable(module.id);
-                }
-              });
-          });
-      }
+    const modules = this.plugin.registry.allModules;
+
+    for (const module of modules)
+    {
+      new Setting(containerEl)
+        .setName(module.name)
+        .addToggle(toggle => toggle
+            .setValue(this.plugin.settings.enabledModules[module.id] ?? false)
+            .onChange(async (value) =>
+            {
+              module.enabled = value;
+              this.plugin.settings.enabledModules[module.id] = value;
+              await this.plugin.saveSettings();
+              
+              if (value) await module.onload();
+              else module.onunload();
+            })
+        );
     }
 
     containerEl.createEl("hr");

@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.8] - 2026-05-15
+
+## Fixed
+- CSS Styling: Migrated from direct property injection to CSS classes.
+- Type Safety: Fixed TypeScript warnings, any types, and unnecessary assertions.
+- Async Operations: Resolved unhandled promises and lifecycle return types.
+
+## Changed
+- Dependencies: Replaced deprecated builtin-modules package.
+
 ## [0.1.7] - 2026-05-15
 
 ### Fixed

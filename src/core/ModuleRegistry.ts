@@ -5,6 +5,11 @@ export class ModuleRegistry
   private modules: Map<string, IModule> = new Map();
   private activeModules: Set<string> = new Set();
 
+  public get allModules(): IModule[]
+  {
+    return Array.from(this.modules.values());
+  }
+
   register(module: IModule): void
   {
     if (this.modules.has(module.id))
@@ -27,6 +32,7 @@ export class ModuleRegistry
 
     if (this.activeModules.has(moduleId)) return;
 
+    module.enabled = true;
     await module.onload();
     this.activeModules.add(moduleId);
 
@@ -40,6 +46,7 @@ export class ModuleRegistry
 
     try
     {
+      module.enabled = false;
       module.onunload();
     }
     catch(e)
@@ -52,10 +59,17 @@ export class ModuleRegistry
 
   unloadAll(): void
   {
-    for (const id of this.activeModules)
+    this.modules.forEach(module =>
     {
-      this.disable(id);
-    }
+      try
+      {
+        module.onunload();
+      }
+      catch (e)
+      {
+        console.error(`Error unloading module ${module.id}`, e);
+      }
+    });
   }
 
   isActive(moduleId: string): boolean

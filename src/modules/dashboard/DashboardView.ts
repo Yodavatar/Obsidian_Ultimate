@@ -44,7 +44,7 @@ export class DashboardView extends ItemView
 
   render(): void
   {
-    const labels = getPriorityLabels() as Record<Priority, string>;
+    const labels = getPriorityLabels();
     if (this.clockInterval) { window.clearInterval(this.clockInterval); this.clockInterval = null; }
     const root = this.containerEl.children[1] as HTMLElement;
     root.empty();
@@ -74,8 +74,8 @@ export class DashboardView extends ItemView
   
     tasks.sort((a, b) =>
     {
-      const priorityA = PRIORITY_ORDER.indexOf((a.priority ?? "normal") as Priority);
-      const priorityB = PRIORITY_ORDER.indexOf((b.priority ?? "normal") as Priority);
+      const priorityA = PRIORITY_ORDER.indexOf((a.priority ?? "normal"));
+      const priorityB = PRIORITY_ORDER.indexOf((b.priority ?? "normal"));
       if (priorityA !== priorityB) return priorityA - priorityB;
       if (a.dueDate && b.dueDate) return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
       if (a.dueDate) return -1;
@@ -95,7 +95,7 @@ export class DashboardView extends ItemView
       const taskCard = tasksGrid.createDiv("dash-task-card");
       const header = taskCard.createDiv("dash-card-header");
       
-      const priority = (task.priority ?? "normal") as Priority;
+      const priority = (task.priority ?? "normal");
       
       const prioritySpan = header.createSpan({
         cls: "dash-task-priority",
@@ -293,9 +293,11 @@ export class DashboardView extends ItemView
     const toggle = row.createEl("input", { type: "checkbox" });
     toggle.checked = this.s[key] as boolean;
     toggle.addEventListener("change", () => {
-      void (async () => {
-          (this.s as any)[key] = toggle.checked;
-          await this.module.saveDashboardSettings();
+      void (async () =>
+      {
+        const settings = this.s as DashboardSettings;
+        (settings[key] as boolean) = toggle.checked;
+        await this.module.saveDashboardSettings();
       })();
     });
   }

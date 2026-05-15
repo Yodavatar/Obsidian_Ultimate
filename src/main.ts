@@ -34,7 +34,7 @@ export default class Harmony extends Plugin {
     this.registry.register(new TodoModule(this.app, this, this.taskStore));
 
     // Fix: Typer l'entrée pour éviter 'any'
-    const moduleEntries = Object.entries(this.settings.enabledModules) as [string, boolean][];
+    const moduleEntries = Object.entries(this.settings.enabledModules);
     
     for (const [moduleId, enabled] of moduleEntries) {
       if (enabled) {
@@ -50,15 +50,16 @@ export default class Harmony extends Plugin {
     console.log("[Harmony] Plugin prêt.");
   }
 
-  async onunload() {
+  onunload()
+  {
+    this.registry.unloadAll();
     console.log("[Harmony] Déchargement du plugin...");
-    if (this.registry) {
-      // Pas de detach ici, ModuleRegistry s'en occupe déjà proprement
-    }
   }
 
-  async loadSettings() {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+  async loadSettings()
+  {
+    const loadedData = await this.loadData();
+    this.settings = Object.assign({}, DEFAULT_SETTINGS, loadedData as Partial<Harmony_Settings>);
   }
 
   async saveSettings() {

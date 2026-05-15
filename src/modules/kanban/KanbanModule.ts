@@ -10,6 +10,7 @@ export class KanbanModule implements IModule
 {
   id = "kanban";
   name = "Kanban";
+  enabled: boolean = true;
 
   private app: App;
   private plugin: Harmony;
@@ -71,11 +72,11 @@ export class KanbanModule implements IModule
     const existing = this.app.workspace.getLeavesOfType(KANBAN_VIEW_TYPE);
     if (existing.length > 0)
     {
-      this.app.workspace.revealLeaf(existing[0]); 
+      await this.app.workspace.revealLeaf(existing[0]); 
       return;
     }
     const leaf = this.app.workspace.getLeaf("tab");
     await leaf.setViewState({ type: KANBAN_VIEW_TYPE, active: true });
-    this.app.workspace.revealLeaf(leaf);
+    await this.app.workspace.revealLeaf(leaf);
   }
 }

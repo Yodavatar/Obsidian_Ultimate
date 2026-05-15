@@ -12,6 +12,7 @@ export class DashboardModule implements IModule
 {
   id = "dashboard";
   name = "Dashboard";
+  enabled: boolean = true;
 
   private app: App;
   private plugin: Harmony;
@@ -73,7 +74,7 @@ export class DashboardModule implements IModule
       const emptyLeaves = this.app.workspace.getLeavesOfType("empty");
       for (const leaf of emptyLeaves)
       {
-        leaf.setViewState({ type: DASHBOARD_VIEW_TYPE, active: false });
+        void leaf.setViewState({ type: DASHBOARD_VIEW_TYPE, active: false });
       }
     });
 
@@ -110,7 +111,7 @@ export class DashboardModule implements IModule
     const existing = this.app.workspace.getLeavesOfType(DASHBOARD_VIEW_TYPE);
     if (existing.length > 0)
     {
-      this.app.workspace.revealLeaf(existing[0]);
+      await this.app.workspace.revealLeaf(existing[0]);
       return;
     }
     const leaf = this.app.workspace.getLeaf("tab");
@@ -119,6 +120,6 @@ export class DashboardModule implements IModule
         type: DASHBOARD_VIEW_TYPE,
         active: true
       });
-    this.app.workspace.revealLeaf(leaf);
+    await this.app.workspace.revealLeaf(leaf);
   }
 }

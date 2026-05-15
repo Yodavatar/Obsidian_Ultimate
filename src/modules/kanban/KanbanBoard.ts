@@ -345,11 +345,14 @@ export class KanbanBoard
       const input = activeDocument.createElement("input");
       input.type = "color";
       input.value = col.color || "#6c8ebf";
-      input.addEventListener("change", async () =>
+      input.addEventListener("change", () =>
       {
-        col.color = input.value;
-        await this.persist();
-        this.render();
+        void (async () =>
+        {
+          col.color = input.value;
+          await this.persist();
+          this.render();
+        })();
       });
       input.click();
     });
@@ -451,7 +454,14 @@ export class KanbanBoard
       const opt = select.createEl("option", { text: labels[p], value: p });
       if (p === (card.priority ?? "normal")) opt.selected = true;
     }
-    select.addEventListener("change", () => { card.priority = select.value as Priority; });
+    select.addEventListener("change", () =>
+    {
+      card.priority = select.value as Priority;
+      void (async () =>
+      {
+        await this.persist();
+      })();
+    });
 
     const btns = modal.createDiv("mkb-editor-btns");
     const saveBtn = btns.createEl("button", { text: t(118), cls: "mkb-btn mkb-btn-primary" });
