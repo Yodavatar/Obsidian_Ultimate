@@ -96,6 +96,7 @@ export class KanbanBoard
     colEl.dataset.colId = col.id;
 
     const colHeader = colEl.createDiv("mkb-column-header");
+    
     if (col.color) colHeader.setCssProps({"border-top-color": col.color});
 
     const titleEl = colHeader.createEl("span", { text: col.title, cls: "mkb-column-title" });

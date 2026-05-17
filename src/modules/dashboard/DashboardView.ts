@@ -48,14 +48,13 @@ export class DashboardView extends ItemView
     if (this.clockInterval) { window.clearInterval(this.clockInterval); this.clockInterval = null; }
     const root = this.containerEl.children[1] as HTMLElement;
     root.empty();
-    root.className = "dash-root";
+    root.addClass("dash-root");
 
     this.applyWallpaper(root);
 
     const overlay = root.createDiv("dash-overlay");
-    overlay.setCssProps({"--dash-op": String(this.s.wallpaperOpacity)});
+    overlay.style.setProperty("--dash-op", String(this.s.wallpaperOpacity));
 
-    // Correction de l'erreur Obsidian : On utilise setIcon au lieu de innerHTML
     const btn = overlay.createEl("button", { cls: "dash-gear-btn" });
     setIcon(btn, "settings"); 
     btn.addEventListener("click", () => this.openSettings());
@@ -69,7 +68,6 @@ export class DashboardView extends ItemView
 
   private renderTasks(parent: HTMLElement, labels: Record<Priority, string>): void
   {
-    // Correction de l'erreur : on utilise 'done' au lieu de 'completed'
     const tasks = this.module.taskstore.getTasks({ done: false, archived: false });
   
     tasks.sort((a, b) =>
@@ -101,7 +99,9 @@ export class DashboardView extends ItemView
         cls: "dash-task-priority",
         text: labels[priority],
       });
-      prioritySpan.setCssProps({"color": PRIORITY_COLORS[priority]});
+      
+      prioritySpan.style.setProperty("--priority-color", PRIORITY_COLORS[priority]);
+      prioritySpan.addClass("hp-task-priority");
 
       taskCard.createDiv({ text: task.title, cls: "dash-task-title" });
       const footer = taskCard.createDiv("dash-card-footer");
@@ -124,13 +124,7 @@ export class DashboardView extends ItemView
     const adapter = this.app.vault.adapter;
     if (!(adapter instanceof FileSystemAdapter)) return;
     const url = adapter.getResourcePath(this.s.wallpaperPath);
-    
-    // Correction Obsidian : Plus de element.style.backgroundImage direct
-    root.setCssProps({
-      "background-image": `url("${url}")`,
-      "background-size": "cover",
-      "background-position": "center"
-    });
+    root.style.backgroundImage = `url("${url}")`;
   }
 
   private renderClock(parent: HTMLElement): void
@@ -161,7 +155,7 @@ export class DashboardView extends ItemView
       placeholder: t(202),
       cls: "dash-search",
     });
-    const results = wrap.createDiv("dash-results");
+    const results = wrap.createDiv("dash-results is-hidden");
 
     input.addEventListener("input", () =>
       {
@@ -170,14 +164,14 @@ export class DashboardView extends ItemView
           {
             results.empty();
             const q = input.value.trim().toLowerCase();
-            if (!q) { results.setCssProps({"display": "none"}); return; }
+            if (!q) { results.addClass("is-hidden"); return; }
 
             const files = this.app.vault
               .getMarkdownFiles()
               .filter(f => f.basename.toLowerCase().includes(q))
               .slice(0, 8);
 
-            results.setCssProps({"display": "block"});
+            results.removeClass("is-hidden");
 
             if (files.length === 0) {
               results.createDiv({ text:t(203), cls: "dash-result-empty" });
@@ -192,7 +186,7 @@ export class DashboardView extends ItemView
               item.addEventListener("click", () =>
               {
                 void this.leaf.openFile(f);
-                results.setCssProps({"display": "none"});
+                results.addClass("is-hidden");
                 input.value = "";
               });
             }
@@ -201,15 +195,13 @@ export class DashboardView extends ItemView
 
     input.addEventListener("keydown", e =>
     {
-      if (e.key === "Escape") { input.value = ""; results.setCssProps({"display": "none"}); }
+      if (e.key === "Escape") { input.value = ""; results.addClass("is-hidden"); }
     });
 
     activeDocument.addEventListener("click", e =>
     {
-      if (!wrap.contains(e.target as Node)) results.setCssProps({"display": "none"});
+      if (!wrap.contains(e.target as Node)) results.addClass("is-hidden");
     });
-
-    results.setCssProps({"display": "none"});
   }
 
   private openSettings(): void {
@@ -259,12 +251,15 @@ export class DashboardView extends ItemView
     });
 
     const clearBtn = wpRight.createEl("button", { text: "✕", cls: "dash-btn", title: t(212) });
-    clearBtn.addEventListener("click", () => {
-      void (async () => {
-          this.s.wallpaperPath = "";
-          wpName.textContent = "Aucun";
-          await this.module.saveDashboardSettings();
-          (this.containerEl.children[1] as HTMLElement).setCssProps({"background-image": "none"});
+    clearBtn.addEventListener("click", () =>
+    {
+      void (async () =>
+      {
+        this.s.wallpaperPath = "";
+        wpName.textContent = "Aucun";
+        await this.module.saveDashboardSettings();
+        const rootEl = this.containerEl.children[1] as HTMLElement;
+        rootEl.style.setProperty("--dash-bg", "none");
       })();
     });
 
@@ -295,7 +290,7 @@ export class DashboardView extends ItemView
     toggle.addEventListener("change", () => {
       void (async () =>
       {
-        const settings = this.s as DashboardSettings;
+        const settings = this.s;
         (settings[key] as boolean) = toggle.checked;
         await this.module.saveDashboardSettings();
       })();

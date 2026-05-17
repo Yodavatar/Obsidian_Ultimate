@@ -34,6 +34,7 @@ jobs:
           files: |
             main.js
             manifest.json
+            styles.css
           generate_release_notes: true
 
       - name: Attest Build Artifacts

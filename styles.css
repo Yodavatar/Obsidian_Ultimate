@@ -3,25 +3,26 @@
    ========================================= */
 
 .dash-root {
-  height: 100%;
-  width: 100%;
-  position: relative;
-  background-color: var(--background-primary);
-  display: flex;
-  align-items: stretch;
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
 }
 
 .dash-overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, calc(var(--dash-op, 0.45) * 1));
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 28px;
-  padding: 32px;
-  overflow-y: auto;
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0, var(--dash-op, 0.5));
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
 }
 
 .dash-gear-btn {
@@ -71,6 +72,12 @@
   background: var(--background-primary); border: 1px solid var(--background-modifier-border);
   border-radius: 14px; overflow: hidden; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4); z-index: 50;
 }
+
+.dash-results.is-hidden {
+    display: none;
+}
+
+
 .dash-result-item {
   display: flex; align-items: center; justify-content: space-between;
   padding: 11px 16px; cursor: pointer; gap: 12px;
@@ -185,7 +192,9 @@
 .mkb-btn-icon { background: transparent; border: none; cursor: pointer; padding: 2px; color: var(--text-muted); }
 .mkb-btn-icon:hover { color: var(--text-normal); }
 .mkb-btn-icon.mkb-danger:hover { color: var(--text-error); }
+
 .mkb-inline-input { width: 100%; border: 1px solid var(--interactive-accent); border-radius: 4px; padding: 2px 6px; background: var(--background-primary); color: var(--text-normal); font-size: inherit; }
+
 .mkb-editor-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 100; }
 .mkb-editor-modal, .mkb-prompt-box { background: var(--background-primary); border: 1px solid var(--background-modifier-border); border-radius: 10px; padding: 20px; min-width: 300px; display: flex; flex-direction: column; gap: 10px; }
 .mkb-editor-row { display: flex; flex-direction: column; gap: 4px; }
@@ -221,4 +230,33 @@
 .utodo-action-del:hover { background: var(--background-modifier-error); color: white; }
 .utodo-action-del svg { width: 16px; height: 16px; }
 .utodo-radial-container { position: fixed; z-index: 10000; pointer-events: none; }
-.utodo-radial-btn { position: absolute; pointer-events: all; cursor: pointer; padding: 8px 16px; border-radius: 20px; color: white; font-weight: bold; font-size: 13px; box-shadow: 0 4px 15px rgba(0,0,0,0.4); transition: transform 0.2s; }
+
+.utodo-radial-btn {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    cursor: pointer;
+    font-size: 10px;
+    font-weight: bold;
+    pointer-events: auto;
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    text-align: center;
+    user-select: none;
+}
+
+
+/* =========================================
+   3. Task Priority STYLES
+   ========================================= */
+
+
+
+.hp-task-priority {
+    color: var(--priority-color);
+}
